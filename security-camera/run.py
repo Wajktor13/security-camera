@@ -1,25 +1,35 @@
 import cv2
+import camera
+import time
+import tkinter as tk
+from PIL import Image, ImageTk
+
+
+'''
+
+* tests *
+
+'''
+
+REFRESH_TIME = 25
 
 def show_video():
-    cap = cv2.VideoCapture(0)
+    cam = camera.Camera()
+    while not cam.validate_capture():
+        print('cannot open input stream')
+        time.sleep(1)
+        cam = camera.Camera()
 
-    if cap.isOpened() == False:
-        print("Error opening video file")
+    while True:
+        cam.refresh_frame()
+        cam.show_window()
 
-    while cap.isOpened():
+        if cam.search_for_motion():
+            print('motion detected')
 
-        ret, frame = cap.read()
-        if ret:
-            cv2.imshow('Frame', frame)
-
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                break
-        else:
+        if cv2.waitKey(REFRESH_TIME) == ord('q'):
+            cam.release_capture()
             break
-
-    cap.release()
-
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

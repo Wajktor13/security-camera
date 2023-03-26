@@ -1,5 +1,5 @@
 import cv2
-import camera
+from camera.camera import Camera
 import time
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -14,11 +14,11 @@ from PIL import Image, ImageTk
 REFRESH_TIME = 25
 
 def show_video():
-    cam = camera.Camera()
+    cam = Camera()
     while not cam.validate_capture():
         print('cannot open input stream')
         time.sleep(1)
-        cam = camera.Camera()
+        cam = Camera()
 
     while True:
         cam.refresh_frame()

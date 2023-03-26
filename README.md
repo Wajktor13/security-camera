@@ -10,6 +10,7 @@ Harmonogram pracy:
 3. LAB4
    - rozbudowa GUI m.in o podstawowe opcje konfiguracyjne
    - różne tryby obrazu
+   - log systemowy / usera?
 4. LAB5
    - powiadomienia (system i mail)
    - rozbudowane opcje konfiguracyjne

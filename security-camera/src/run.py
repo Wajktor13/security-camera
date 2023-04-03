@@ -3,7 +3,7 @@ from camera.camera import Camera
 import time
 import tkinter as tk
 from PIL import Image, ImageTk
-
+import time
 
 '''
 
@@ -11,24 +11,47 @@ from PIL import Image, ImageTk
 
 '''
 
-REFRESH_TIME = 25
+REFRESH_TIME = 35
+EMERGENCY_RECORDING_LENGTH = 4
+STANDARD_RECORDING_LENGTH = 10
 
 def show_video():
     cam = Camera()
+    emergency_started = False
+    recording_start_time = None
+
     while not cam.validate_capture():
         print('cannot open input stream')
         time.sleep(1)
         cam = Camera()
 
+    standard_recording_start_time = time.time()
+
     while True:
         cam.refresh_frame()
+        cam.save_frame()
         cam.show_window()
 
-        if cam.search_for_motion():
-            print('motion detected')
+        if time.time() - standard_recording_start_time >= STANDARD_RECORDING_LENGTH:
+            cam.stop_recording()
+            standard_recording_start_time = time.time()
+
+        if not emergency_started:
+            if cam.search_for_motion():
+                print('motion detected')
+                emergency_started = True
+                recording_start_time = time.time()
+                cam.emergency_save_frame()
+        elif time.time() - recording_start_time >= EMERGENCY_RECORDING_LENGTH:
+            emergency_started = False
+            cam.stop_emergency_recording()
+
+        else:
+            print('recording')
+            cam.emergency_save_frame()
 
         if cv2.waitKey(REFRESH_TIME) == ord('q'):
-            cam.release_capture()
+            cam.destroy()
             break
 
 

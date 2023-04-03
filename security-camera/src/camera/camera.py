@@ -1,37 +1,65 @@
 import cv2
 from numpy import ones
+import time
 
 
 class Camera:
     '''
-
         class responsible for handling input from the video source
-
     '''
 
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)  # might cause error
-        self.frame_size = (int(self.capture.get(3)), int(self.capture.get(4)))
-        self.fourcc_codec = cv2.VideoWriter_fourcc(*"mp4v")  # todo: mkv might be better, tests needed
+        self.capture = cv2.VideoCapture(0)
+        self.fourcc_codec = cv2.VideoWriter_fourcc(*'H264')
         self.frame = None
 
-        # todo: config
-        self.max_detection_sensitivity = 15
-        self.kernel = (3, 3)
-        self.min_motion_rectangle_area = 1000
+        '''
+            standard recording
+        '''
+        self.recording_started = False
+        self.recording_file_path = None
+        self.recording_output = None
 
-        # todo: how to adjust it?
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        '''
+            emergency recording
+        '''
+        self.emergency_started = False
+        self.emergency_file_path = None
+        self.emergency_output = None
+        self.emergency_buffered_frames = []
+
+        '''
+            users config
+        '''
+        self.max_detection_sensitivity = 15
+        self.kernel = (3, 3)    # todo: Should user set it?
+        self.min_motion_rectangle_area = 1000
+        self.emergency_buff_size = 50
+        self.frame_size = (1280, 720)   # todo: how to adjust it? Should user set it?
+
+        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
 
     def validate_capture(self):
         return self.capture.isOpened()
 
-    def release_capture(self):
+    def destroy(self):
+        self.stop_emergency_recording()
         self.capture.release()
+        cv2.destroyAllWindows()
 
     def refresh_frame(self):
         success, self.frame = self.capture.read()
+
+        if success:
+            '''
+                updating buffered frames
+            '''
+
+            self.emergency_buffered_frames.append(self.frame)
+
+            if len(self.emergency_buffered_frames) > self.emergency_buff_size:
+                self.emergency_buffered_frames.pop(0)
 
         return success
 
@@ -39,12 +67,12 @@ class Camera:
         cv2.imshow('Capture', self.frame)
 
     def search_for_motion(self):
-        if not self.refresh_frame():
-            return False
+        # if not self.refresh_frame():
+        #     return False
 
         frame1 = self.frame
 
-        # todo: some delay ?? might not be needed
+        # todo: some delay ?? Might not be needed
 
         if not self.refresh_frame():
             return False
@@ -62,7 +90,60 @@ class Camera:
 
         for contour in contours:
             if cv2.contourArea(contour) >= self.min_motion_rectangle_area:
+                '''
+                    motion detected
+                '''
+
                 return True
+
+        return False
+
+    def save_frame(self):
+        if not self.recording_started:
+            '''
+                set new recording
+            '''
+
+            self.recording_started = True
+            current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
+            self.recording_file_path = f'../recordings/standard/{current_recording_time}.mkv'
+            self.recording_output = cv2.VideoWriter(self.recording_file_path, self.fourcc_codec, 20, self.frame_size)
+
+            '''
+                insert buffered frames into output video
+            '''
+
+        self.recording_output.write(self.frame)
+
+    def emergency_save_frame(self):
+        if not self.emergency_started:
+            '''
+                set new emergency recording
+            '''
+
+            self.emergency_started = True
+            current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
+            self.emergency_file_path = f'../recordings/emergency/{current_recording_time}.mkv'
+            self.emergency_output = cv2.VideoWriter(self.emergency_file_path, self.fourcc_codec, 20, self.frame_size)
+
+            '''
+                insert buffered frames into output video
+            '''
+
+            for buffered_frame in self.emergency_buffered_frames:
+                self.emergency_output.write(buffered_frame)
+
+        self.emergency_output.write(self.frame)
+
+    def stop_recording(self):
+        if self.recording_output is not None:
+            self.recording_output.release()
+        self.recording_started = False
+
+    def stop_emergency_recording(self):
+        if self.emergency_output is not None:
+            self.emergency_output.release()
+        self.emergency_started = False
 
     @staticmethod
     def convert_frame_to_gray(frame, kernel):

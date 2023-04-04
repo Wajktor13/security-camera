@@ -38,9 +38,9 @@ class Camera:
             other settings
         '''
         self.fourcc_codec = cv2.VideoWriter_fourcc(*'H264')
+        self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
-        self.capture = cv2.VideoCapture(0)
         self.frame = None
 
     def validate_capture(self):

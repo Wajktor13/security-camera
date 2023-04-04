@@ -47,7 +47,6 @@ def show_video():
             cam.stop_emergency_recording()
 
         else:
-            print('recording')
             cam.emergency_save_frame()
 
         if cv2.waitKey(REFRESH_TIME) == ord('q'):

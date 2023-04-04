@@ -4,9 +4,9 @@ Harmonogram pracy:
    - struktura projektu ✅
    - wyświetlanie obrazu z kamery ✅
 2. LAB3
-   - podstwowe GUI
-   - detekcja ruchu
-   - zapisywanie nagrań lokalnie 
+   - podstwowe GUI ✅
+   - detekcja ruchu ✅
+   - zapisywanie nagrań lokalnie ✅
 3. LAB4
    - rozbudowa GUI m.in o podstawowe opcje konfiguracyjne
    - różne tryby obrazu

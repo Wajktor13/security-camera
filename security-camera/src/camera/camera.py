@@ -5,13 +5,19 @@ import time
 
 class Camera:
     '''
-        class responsible for handling input from the video source
+        class responsible for handling input from the video source, detecting motion
     '''
 
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)
-        self.fourcc_codec = cv2.VideoWriter_fourcc(*'H264')
-        self.frame = None
+        '''
+            config
+        '''
+        self.kernel = (3, 3)    # todo: Should user set it?
+        self.min_motion_rectangle_area = 1000
+        self.emergency_buff_size = 50
+        self.frame_size = (1280, 720)   # todo: how to adjust it? Should user set it?
+        self.detection_sensitivity = 12
+        self.max_detection_sensitivity = 15
 
         '''
             standard recording
@@ -29,22 +35,20 @@ class Camera:
         self.emergency_buffered_frames = []
 
         '''
-            users config
+            other settings
         '''
-        self.max_detection_sensitivity = 15
-        self.kernel = (3, 3)    # todo: Should user set it?
-        self.min_motion_rectangle_area = 1000
-        self.emergency_buff_size = 50
-        self.frame_size = (1280, 720)   # todo: how to adjust it? Should user set it?
-
+        self.fourcc_codec = cv2.VideoWriter_fourcc(*'H264')
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
+        self.capture = cv2.VideoCapture(0)
+        self.frame = None
 
     def validate_capture(self):
         return self.capture.isOpened()
 
     def destroy(self):
         self.stop_emergency_recording()
+        self.stop_recording()
         self.capture.release()
         cv2.destroyAllWindows()
 
@@ -82,7 +86,7 @@ class Camera:
         gray_diff = cv2.absdiff(self.convert_frame_to_gray(frame1, self.kernel),
                                 self.convert_frame_to_gray(frame2, self.kernel))
         binary_diff = \
-            cv2.threshold(gray_diff, thresh=(self.max_detection_sensitivity + 1 - self.max_detection_sensitivity)
+            cv2.threshold(gray_diff, thresh=(self.max_detection_sensitivity + 1 - self.detection_sensitivity)
                                             * self.max_detection_sensitivity, maxval=255, type=cv2.THRESH_BINARY)[1]
         binary_diff = cv2.dilate(binary_diff, ones(self.kernel), 1)
 

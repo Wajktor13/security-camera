@@ -13,12 +13,12 @@ import time
 
 REFRESH_TIME = 35
 EMERGENCY_RECORDING_LENGTH = 4
-STANDARD_RECORDING_LENGTH = 10
+STANDARD_RECORDING_LENGTH = 15
 
 def show_video():
     cam = Camera()
     emergency_started = False
-    recording_start_time = None
+    emergency_recording_start_time = None
 
     while not cam.validate_capture():
         print('cannot open input stream')
@@ -32,7 +32,7 @@ def show_video():
         cam.save_frame()
         cam.show_window()
 
-        if time.time() - standard_recording_start_time >= STANDARD_RECORDING_LENGTH:
+        if time.time() - standard_recording_start_time >= STANDARD_RECORDING_LENGTH + 1:
             cam.stop_recording()
             standard_recording_start_time = time.time()
 
@@ -40,9 +40,9 @@ def show_video():
             if cam.search_for_motion():
                 print('motion detected')
                 emergency_started = True
-                recording_start_time = time.time()
+                emergency_recording_start_time = time.time()
                 cam.emergency_save_frame()
-        elif time.time() - recording_start_time >= EMERGENCY_RECORDING_LENGTH:
+        elif time.time() - emergency_recording_start_time >= EMERGENCY_RECORDING_LENGTH + 1:
             emergency_started = False
             cam.stop_emergency_recording()
 

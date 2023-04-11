@@ -1,58 +1,54 @@
 import cv2
-from camera.camera import Camera
-import time
-import tkinter as tk
-from PIL import Image, ImageTk
+from camera import Camera
 import time
 
-'''
 
-* tests *
+class Controller:
+    def __init__(self):
+        self.refresh_time = 10
+        self.emergency_recording_length = 4
+        self.standard_recording_length = 3
+        self.monitoring = True
+        self.cam = Camera()
 
-'''
+    def start_monitoring(self):
+        
+        emergency_recording_started = False
+        emergency_recording_start_time = None
 
-REFRESH_TIME = 35
-EMERGENCY_RECORDING_LENGTH = 4
-STANDARD_RECORDING_LENGTH = 15
+        while not self.cam.validate_capture():
+            print('cannot open input stream')
+            time.sleep(1)
+            self.cam = Camera()
 
-def show_video():
-    cam = Camera()
-    emergency_started = False
-    emergency_recording_start_time = None
+        standard_recording_start_time = time.time()
 
-    while not cam.validate_capture():
-        print('cannot open input stream')
-        time.sleep(1)
-        cam = Camera()
+        while self.monitoring:
+            self.cam.refresh_frame()
+            self.cam.save_frame()
 
-    standard_recording_start_time = time.time()
+            if time.time() - standard_recording_start_time >= self.standard_recording_length + 1:
+                self.cam.stop_recording()
+                standard_recording_start_time = time.time()
 
-    while True:
-        cam.refresh_frame()
-        cam.save_frame()
-        cam.show_window()
+            if not emergency_recording_started:
+                if self.cam.search_for_motion():
+                    emergency_recording_started = True
+                    emergency_recording_start_time = time.time()
+                    self.cam.emergency_save_frame()
+                    
+            elif time.time() - emergency_recording_start_time >= self.emergency_recording_length + 1:
+                emergency_recording_started = False
+                self.cam.stop_emergency_recording()
 
-        if time.time() - standard_recording_start_time >= STANDARD_RECORDING_LENGTH + 1:
-            cam.stop_recording()
-            standard_recording_start_time = time.time()
+            else:
+                self.cam.emergency_save_frame()
 
-        if not emergency_started:
-            if cam.search_for_motion():
-                print('motion detected')
-                emergency_started = True
-                emergency_recording_start_time = time.time()
-                cam.emergency_save_frame()
-        elif time.time() - emergency_recording_start_time >= EMERGENCY_RECORDING_LENGTH + 1:
-            emergency_started = False
-            cam.stop_emergency_recording()
-
-        else:
-            cam.emergency_save_frame()
-
-        if cv2.waitKey(REFRESH_TIME) == ord('q'):
-            cam.destroy()
-            break
+            if cv2.waitKey(self.refresh_time) == ord('q'):
+                self.cam.destroy()
+                break
 
 
 if __name__ == "__main__":
-    show_video()
+    c = Controller()
+    c.start_monitoring()

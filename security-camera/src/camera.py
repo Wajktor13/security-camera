@@ -14,7 +14,7 @@ class Camera:
         '''
         self.kernel = (3, 3)    # todo: Should user set it?
         self.min_motion_rectangle_area = 1000
-        self.emergency_buff_size = 50
+        self.emergency_buff_size = 60
         self.frame_size = (1280, 720)   # todo: how to adjust it? Should user set it?
         self.detection_sensitivity = 12
         self.max_detection_sensitivity = 15
@@ -37,7 +37,7 @@ class Camera:
         '''
             other settings
         '''
-        self.fourcc_codec = cv2.VideoWriter_fourcc(*'H264')
+        self.fourcc_codec = cv2.VideoWriter_fourcc(*'h264')
         self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
@@ -113,10 +113,6 @@ class Camera:
             self.recording_file_path = f'../recordings/standard/{current_recording_time}.mkv'
             self.recording_output = cv2.VideoWriter(self.recording_file_path, self.fourcc_codec, 20, self.frame_size)
 
-            '''
-                insert buffered frames into output video
-            '''
-
         self.recording_output.write(self.frame)
 
     def emergency_save_frame(self):
@@ -133,6 +129,8 @@ class Camera:
             '''
                 insert buffered frames into output video
             '''
+
+            #todo: multiprocessing
 
             for buffered_frame in self.emergency_buffered_frames:
                 self.emergency_output.write(buffered_frame)

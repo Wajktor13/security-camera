@@ -20,7 +20,7 @@ class Camera:
         self.emergency_buff_size = emergency_buff_size
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
-        self.frame_size = (1280, 720)  # todo: how to adjust it? Should user set it?
+        self.camera_number = 0  # todo: should user set which camera to use?
 
         '''
             standard recording
@@ -48,9 +48,9 @@ class Camera:
         else:
             self.fourcc_codec = cv2.VideoWriter_fourcc(*'mp4v')
 
-        self.capture = cv2.VideoCapture(0)
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
+        self.capture = cv2.VideoCapture(self.camera_number)
+        self.frame_size = (int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                           int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         self.frame = None
         self.kernel = (3, 3)
 

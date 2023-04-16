@@ -14,8 +14,8 @@ class App(tk.Tk):
         self.surveillance_thread = None
 
         self.title('title')
-        self.app_height = 1000
-        self.app_width = 1400
+        self.app_height = 800
+        self.app_width = 1200
         self.screen_height = self.winfo_screenheight()
         self.screen_width = self.winfo_screenwidth()
         self.x_coordinate = int((self.screen_width / 2) - (self.app_width / 2))
@@ -24,8 +24,8 @@ class App(tk.Tk):
 
         self.geometry("{}x{}+{}+{}".format(self.app_width, self.app_height, self.x_coordinate, self.y_coordinate))
 
-        self.start_button = tk.Button(self, text="Start", command=self.run_surveillance_thread, width=80, height=5)
-        self.stop_button = tk.Button(self, text="Stop", command=self.kill_surveillance_thread, width=80, height=5)
+        self.start_button = tk.Button(self, text="Start", command=self.run_surveillance_thread, width=30, height=3)
+        self.stop_button = tk.Button(self, text="Stop", command=self.kill_surveillance_thread, width=30, height=3)
 
         self.start_button.pack()
         self.stop_button.pack()

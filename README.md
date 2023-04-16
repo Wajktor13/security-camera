@@ -9,11 +9,13 @@ Harmonogram pracy:
    - zapisywanie nagrań lokalnie ✅
 3. LAB4
    - rozbudowa GUI m.in o podstawowe opcje konfiguracyjne
-   - różne tryby obrazu
-   - log systemowy / usera?
+   - różne tryby obrazu ✅
 4. LAB5
    - powiadomienia (system i mail)
    - rozbudowane opcje konfiguracyjne
 5. LAB6
    - wysyłanie nagrań na dysk
    - statystyki
+
+Opcjonalnie:
+   - log systemowy / usera

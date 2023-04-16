@@ -8,7 +8,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.cam_controller = Controller(refresh_time=10, emergency_recording_length=5, standard_recording_length=15,
+        self.cam_controller = Controller(refresh_time=10, emergency_recording_length=4, standard_recording_length=40,
                                          emergency_buff_size=70, detection_sensitivity=12, max_detection_sensitivity=15,
                                          min_motion_rectangle_area=1000)
         self.surveillance_thread = None
@@ -49,7 +49,9 @@ class App(tk.Tk):
 
     def update_window(self):
         if self.cam_controller.surveillance_running:
-            frame = self.cam_controller.cam.get_standard_frame()
+
+            frame = self.cam_controller.cam.get_frame_with_contours()
+
             if frame is not None:
                 self.photo = ImageTk.PhotoImage(image=Image.fromarray(frame))
                 self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 from threading import Thread
+from collections import deque
 
 
 class Camera:
@@ -14,7 +15,7 @@ class Camera:
         '''
             user's config
         '''
-        self.min_motion_rectangle_area = min_motion_rectangle_area
+        self.min_motion_contour_area = min_motion_rectangle_area
         self.emergency_buff_size = emergency_buff_size
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
@@ -34,7 +35,7 @@ class Camera:
         self.emergency_started = False
         self.emergency_file_path = None
         self.emergency_output = None
-        self.emergency_buffered_frames = []  # todo: replace with queue
+        self.emergency_buffered_frames = deque()
         self.emergency_fps = 40
 
         '''
@@ -66,12 +67,22 @@ class Camera:
             self.emergency_buffered_frames.append(self.frame)
 
             if len(self.emergency_buffered_frames) > self.emergency_buff_size:
-                self.emergency_buffered_frames.pop(0)
+                self.emergency_buffered_frames.popleft()
 
         return success
 
     def show_window(self):
         cv2.imshow('Capture', self.frame)
+
+    def get_motion_contours(self, frame1, frame2):
+        gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame1, self.kernel),
+                                self.convert_frame_to_gray_gb(frame2, self.kernel))
+        binary_diff = \
+            cv2.threshold(gray_diff, thresh=(self.max_detection_sensitivity + 1 - self.detection_sensitivity)
+                                            * self.max_detection_sensitivity, maxval=255, type=cv2.THRESH_BINARY)[1]
+        binary_diff = cv2.dilate(binary_diff, np.ones(self.kernel), 1)
+
+        return cv2.findContours(binary_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)[0]
 
     def search_for_motion(self):
         frame1 = self.frame
@@ -81,17 +92,10 @@ class Camera:
 
         frame2 = self.frame
 
-        gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame1, self.kernel),
-                                self.convert_frame_to_gray_gb(frame2, self.kernel))
-        binary_diff = \
-            cv2.threshold(gray_diff, thresh=(self.max_detection_sensitivity + 1 - self.detection_sensitivity)
-                                            * self.max_detection_sensitivity, maxval=255, type=cv2.THRESH_BINARY)[1]
-        binary_diff = cv2.dilate(binary_diff, np.ones(self.kernel), 1)
-
-        contours = cv2.findContours(binary_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)[0]
+        contours = self.get_motion_contours(frame1, frame2)
 
         for contour in contours:
-            if cv2.contourArea(contour) >= self.min_motion_rectangle_area:
+            if cv2.contourArea(contour) >= self.min_motion_contour_area:
                 '''
                     motion detected
                 '''
@@ -141,7 +145,7 @@ class Camera:
     def write_emergency_buffer(self):
         while self.emergency_started or len(self.emergency_buffered_frames) > 0:
             if len(self.emergency_buffered_frames) > 0:
-                self.emergency_output.write(self.emergency_buffered_frames.pop(0))
+                self.emergency_output.write(self.emergency_buffered_frames.popleft())
 
     def stop_recording(self):
         self.recording_started = False
@@ -149,7 +153,7 @@ class Camera:
             try:
                 self.recording_output.release()
             except:
-                # todo: sometimes makes video not working...
+                # todo: sometimes makes video not work...
                 pass
 
     def stop_emergency_recording(self):
@@ -190,6 +194,35 @@ class Camera:
             gray_frame = self.convert_frame_to_gray_gb(self.frame, self.kernel)
 
             return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
+
+    def get_frame_with_contours(self):
+        frame1 = self.frame
+
+        if not self.refresh_frame():
+            return frame1
+
+        frame2 = np.copy(self.frame)
+
+        contours = self.get_motion_contours(frame1, frame2)
+
+        return self.convert_frame_to_rgb(cv2.drawContours(frame2, contours, -1, (0, 255, 0), 3))
+
+    def get_frame_with_rectangles(self):
+        frame1 = self.frame
+
+        if not self.refresh_frame():
+            return frame1
+
+        frame2 = np.copy(self.frame)
+
+        contours = self.get_motion_contours(frame1, frame2)
+
+        for contour in contours:
+            (x, y, w, h) = cv2.boundingRect(contour)
+            if w > 30 and h > 30:
+                cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        return self.convert_frame_to_rgb(frame2)
 
     @staticmethod
     def convert_frame_to_gray_gb(frame, kernel):

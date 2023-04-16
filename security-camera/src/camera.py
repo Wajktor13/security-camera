@@ -3,6 +3,7 @@ import numpy as np
 import time
 from threading import Thread
 from collections import deque
+from platform import system
 
 
 class Camera:
@@ -41,7 +42,12 @@ class Camera:
         '''
             other settings
         '''
-        self.fourcc_codec = cv2.VideoWriter_fourcc(*'h264')  # todo: add linux support
+        # todo: look for h264 lib for linux
+        if system() == "Windows":
+            self.fourcc_codec = cv2.VideoWriter_fourcc(*'h264')
+        else:
+            self.fourcc_codec = cv2.VideoWriter_fourcc(*'mp4v')
+
         self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
@@ -75,6 +81,9 @@ class Camera:
         cv2.imshow('Capture', self.frame)
 
     def get_motion_contours(self, frame1, frame2):
+        if frame1 is None or frame2 is None:
+            return None
+
         gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame1, self.kernel),
                                 self.convert_frame_to_gray_gb(frame2, self.kernel))
         binary_diff = \
@@ -94,13 +103,14 @@ class Camera:
 
         contours = self.get_motion_contours(frame1, frame2)
 
-        for contour in contours:
-            if cv2.contourArea(contour) >= self.min_motion_contour_area:
-                '''
-                    motion detected
-                '''
+        if contours is not None:
+            for contour in contours:
+                if cv2.contourArea(contour) >= self.min_motion_contour_area:
+                    '''
+                        motion detected
+                    '''
 
-                return True
+                    return True
 
         return False
 
@@ -145,7 +155,10 @@ class Camera:
     def write_emergency_buffer(self):
         while self.emergency_started or len(self.emergency_buffered_frames) > 0:
             if len(self.emergency_buffered_frames) > 0:
-                self.emergency_output.write(self.emergency_buffered_frames.popleft())
+                try:
+                    self.emergency_output.write(self.emergency_buffered_frames.popleft())
+                except:
+                    pass
 
     def stop_recording(self):
         self.recording_started = False
@@ -198,29 +211,33 @@ class Camera:
     def get_frame_with_contours(self):
         frame1 = self.frame
 
-        if not self.refresh_frame():
+        if not self.refresh_frame() or frame1 is None:
             return frame1
 
         frame2 = np.copy(self.frame)
 
         contours = self.get_motion_contours(frame1, frame2)
 
-        return self.convert_frame_to_rgb(cv2.drawContours(frame2, contours, -1, (0, 255, 0), 3))
+        if contours is not None:
+            return self.convert_frame_to_rgb(cv2.drawContours(frame2, contours, -1, (0, 255, 0), 3))
+        else:
+            return frame2
 
     def get_frame_with_rectangles(self):
         frame1 = self.frame
 
-        if not self.refresh_frame():
+        if not self.refresh_frame() or frame1 is None:
             return frame1
 
         frame2 = np.copy(self.frame)
 
         contours = self.get_motion_contours(frame1, frame2)
 
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            if w > 30 and h > 30:
-                cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        if contours is not None:
+            for contour in contours:
+                (x, y, w, h) = cv2.boundingRect(contour)
+                if w > 30 and h > 30:
+                    cv2.rectangle(frame2, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 255, 0), 2)
 
         return self.convert_frame_to_rgb(frame2)
 

@@ -3,6 +3,7 @@ import numpy as np
 import time
 from threading import Thread
 from collections import deque
+from platform import system
 
 
 class Camera:
@@ -19,7 +20,7 @@ class Camera:
         self.emergency_buff_size = emergency_buff_size
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
-        self.frame_size = (1280, 720)  # todo: how to adjust it? Should user set it?
+        self.camera_number = 0  # todo: should user set which camera to use?
 
         '''
             standard recording
@@ -41,10 +42,17 @@ class Camera:
         '''
             other settings
         '''
-        self.fourcc_codec = cv2.VideoWriter_fourcc(*'h264')  # todo: add linux support
-        self.capture = cv2.VideoCapture(0)
+        # todo: look for h264 lib for linux
+        if system() == "Windows":
+            self.fourcc_codec = cv2.VideoWriter_fourcc(*'h264')
+            self.capture = cv2.VideoCapture(self.camera_number, cv2.CAP_DSHOW)
+        else:
+            self.fourcc_codec = cv2.VideoWriter_fourcc(*'mp4v')
+            self.capture = cv2.VideoCapture(self.camera_number)
+
+        self.frame_size = (640, 480)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_size[0])
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_size[1])        
         self.frame = None
         self.kernel = (3, 3)
 
@@ -61,20 +69,27 @@ class Camera:
         success, self.frame = self.capture.read()
 
         if success:
-            '''
-                updating buffered frames
-            '''
-            self.emergency_buffered_frames.append(self.frame)
+            frame_to_save = np.copy(self.frame)
 
-            if len(self.emergency_buffered_frames) > self.emergency_buff_size:
-                self.emergency_buffered_frames.popleft()
+            if frame_to_save is not None:
+                '''
+                    updating buffered frames
+                '''
+                self.emergency_buffered_frames.append(frame_to_save)
+
+                if len(self.emergency_buffered_frames) > self.emergency_buff_size:
+                    self.emergency_buffered_frames.popleft()
 
         return success
 
     def show_window(self):
-        cv2.imshow('Capture', self.frame)
+        if self.frame is not None:
+            cv2.imshow('Capture', self.frame)
 
     def get_motion_contours(self, frame1, frame2):
+        if frame1 is None or frame2 is None:
+            return None
+
         gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame1, self.kernel),
                                 self.convert_frame_to_gray_gb(frame2, self.kernel))
         binary_diff = \
@@ -85,22 +100,26 @@ class Camera:
         return cv2.findContours(binary_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)[0]
 
     def search_for_motion(self):
-        frame1 = self.frame
+        frame1 = np.copy(self.frame)
 
-        if not self.refresh_frame():
+        if not self.refresh_frame() or frame1 is None:
             return False
 
-        frame2 = self.frame
+        frame2 = np.copy(self.frame)
+
+        if frame2 is None:
+            return False
 
         contours = self.get_motion_contours(frame1, frame2)
 
-        for contour in contours:
-            if cv2.contourArea(contour) >= self.min_motion_contour_area:
-                '''
-                    motion detected
-                '''
+        if contours is not None:
+            for contour in contours:
+                if cv2.contourArea(contour) >= self.min_motion_contour_area:
+                    '''
+                        motion detected
+                    '''
 
-                return True
+                    return True
 
         return False
 
@@ -114,10 +133,12 @@ class Camera:
             self.recording_file_path = f'../recordings/standard/{current_recording_time}.mkv'
             self.recording_output = cv2.VideoWriter(self.recording_file_path, self.fourcc_codec, self.recording_fps,
                                                     self.frame_size)
+        
+        frame_to_save = np.copy(self.frame)
 
-        if self.frame is not None and self.recording_output is not None:
+        if frame_to_save is not None and self.recording_output is not None:
             try:
-                self.recording_output.write(self.frame)
+                self.recording_output.write(frame_to_save)
             except:
                 # lost frame - log it
                 pass
@@ -139,13 +160,19 @@ class Camera:
             emergency_buff_write_thread = Thread(target=self.write_emergency_buffer)
             emergency_buff_write_thread.start()
 
-        if self.frame is not None:
-            self.emergency_buffered_frames.append(self.frame)
+        frame_to_save = np.copy(self.frame)
+
+        if frame_to_save is not None:
+            self.emergency_buffered_frames.append(frame_to_save)
 
     def write_emergency_buffer(self):
-        while self.emergency_started or len(self.emergency_buffered_frames) > 0:
-            if len(self.emergency_buffered_frames) > 0:
-                self.emergency_output.write(self.emergency_buffered_frames.popleft())
+        if self.emergency_output is not None:
+            while self.emergency_started or len(self.emergency_buffered_frames) > 0:
+                if len(self.emergency_buffered_frames):
+                    try:
+                        self.emergency_output.write(self.emergency_buffered_frames.popleft())
+                    except:
+                        pass
 
     def stop_recording(self):
         self.recording_started = False
@@ -165,8 +192,9 @@ class Camera:
                 pass
 
     def get_standard_frame(self):
-        if self.frame is not None:
-            return self.convert_frame_to_rgb(self.frame)
+        frame = np.copy(self.frame)
+        if frame is not None:
+            return self.convert_frame_to_rgb(frame)
 
     def get_sharpened_frame(self):
         if self.frame is not None:
@@ -196,31 +224,41 @@ class Camera:
             return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
 
     def get_frame_with_contours(self):
-        frame1 = self.frame
+        frame1 = np.copy(self.frame)
 
-        if not self.refresh_frame():
-            return frame1
+        if not self.refresh_frame() or frame1 is None:
+            return
 
         frame2 = np.copy(self.frame)
 
+        if frame2 is None:
+            return
+
         contours = self.get_motion_contours(frame1, frame2)
 
-        return self.convert_frame_to_rgb(cv2.drawContours(frame2, contours, -1, (0, 255, 0), 3))
+        if contours is not None:
+            return self.convert_frame_to_rgb(cv2.drawContours(frame2, contours, -1, (0, 255, 0), 3))
+        else:
+            return frame2
 
     def get_frame_with_rectangles(self):
-        frame1 = self.frame
+        frame1 = np.copy(self.frame)
 
-        if not self.refresh_frame():
-            return frame1
+        if not self.refresh_frame() or frame1 is None:
+            return
 
         frame2 = np.copy(self.frame)
 
+        if frame2 is None:
+            return
+
         contours = self.get_motion_contours(frame1, frame2)
 
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            if w > 30 and h > 30:
-                cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        if contours is not None:
+            for contour in contours:
+                (x, y, w, h) = cv2.boundingRect(contour)
+                if w > 30 and h > 30:
+                    cv2.rectangle(frame2, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 255, 0), 2)
 
         return self.convert_frame_to_rgb(frame2)
 

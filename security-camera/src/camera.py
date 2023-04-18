@@ -37,7 +37,7 @@ class Camera:
         self.emergency_file_path = None
         self.emergency_output = None
         self.emergency_buffered_frames = deque()
-        self.emergency_fps = 40
+        self.emergency_fps = 45
 
         '''
             other settings
@@ -278,4 +278,4 @@ class Camera:
     
     @staticmethod
     def validate_frame(frame):
-        return frame is not None and repr(frame) != 'None'
+        return frame is not None and str(frame) != 'None'

@@ -278,4 +278,4 @@ class Camera:
     
     @staticmethod
     def validate_frame(frame):
-        return frame is not None and repr(frame) != 'None'
+        return frame is not None and str(frame) != 'None'

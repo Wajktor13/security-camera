@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
@@ -13,26 +14,87 @@ class App(tk.Tk):
                                          min_motion_rectangle_area=100)
         self.surveillance_thread = None
 
-        self.title('title')
-        self.app_height = 800
-        self.app_width = 1200
+        self.title('Camera window')
+        self.app_height = int(self.winfo_screenheight()*0.9)
+        self.app_width = int(self.winfo_screenwidth()*0.9)
         self.screen_height = self.winfo_screenheight()
         self.screen_width = self.winfo_screenwidth()
         self.x_coordinate = int((self.screen_width / 2) - (self.app_width / 2))
-        self.y_coordinate = int((self.screen_height / 2) - (self.app_height / 2))
+        ## odjęte 30 pikseli ze względu na pasek nawigacyjny Windowsa
+        self.y_coordinate = int((self.screen_height / 2) - (self.app_height / 2))-30
         self.refresh_time = 30
 
         self.geometry("{}x{}+{}+{}".format(self.app_width, self.app_height, self.x_coordinate, self.y_coordinate))
 
-        self.start_button = tk.Button(self, text="Start", command=self.run_surveillance_thread, width=30, height=3)
-        self.stop_button = tk.Button(self, text="Stop", command=self.kill_surveillance_thread, width=30, height=3)
+        ## utworzenie widgetów do zmiany parametrów
+        
 
-        self.start_button.pack()
-        self.stop_button.pack()
+        ## zmiana częstotliwości odświeżania
+        self.refresh_time_scale = ttk.Scale(self, from_=1, to=60,
+                                                     variable=tk.IntVar(value=self.cam_controller.refresh_time),
+                                                     length=200, orient=tk.HORIZONTAL)
+        self.refresh_time_scale.grid(row=0, column=1, padx=5, pady=5)
+        self.refresh_time_label = ttk.Label(self, text="Częstotliwość odświeżania:")
+        self.refresh_time_label.grid(row=0, column=0, padx=5, pady=5)
 
-        self.canvas = tk.Canvas(self, width=1000,
-                                height=1000)
-        self.canvas.pack()
+        ## zmiana długości nagrywania awaryjnego 
+        self.emergency_recording_length_scale = ttk.Scale(self, from_=1, to=30,
+                                                     variable=tk.IntVar(value=self.cam_controller.emergency_recording_length),
+                                                     length=200, orient=tk.HORIZONTAL)
+        self.emergency_recording_length_scale.grid(row=1, column=1, padx=5, pady=5)
+        self.emergency_recording_length_label = ttk.Label(self, text="Długość nagrania awaryjnego:")
+        self.emergency_recording_length_label.grid(row=1, column=0, padx=5, pady=5)
+
+        ## zmiana długości nagrania standardowego
+        self.standard_recording_length_scale = ttk.Scale(self, from_=1, to=250,
+                                                     variable=tk.IntVar(value=self.cam_controller.standard_recording_length),
+                                                     length=200, orient=tk.HORIZONTAL)
+        self.standard_recording_length_scale.grid(row=2, column=1, padx=5, pady=5)
+        self.standard_recording_length_label = ttk.Label(self, text="Długość nagrania standardowego:")
+        self.standard_recording_length_label.grid(row=2, column=0, padx=5, pady=5)
+
+
+        ## zmiana wielkości bufora do nagrania awaryjnego
+        self.emergency_buff_size_scale = ttk.Scale(self, from_=1, to=60,
+                                                     variable=tk.IntVar(value=self.cam_controller.emergency_buff_size),
+                                                     length=200, orient=tk.HORIZONTAL)
+        self.emergency_buff_size_scale.grid(row=3, column=1, padx=5, pady=5)
+        self.emergency_buff_size_label = ttk.Label(self, text="Częstotliwośc odświeżania:")
+        self.emergency_buff_size_label.grid(row=3, column=0, padx=5, pady=5)
+
+
+        ## zmiana czułości detekcji
+        self.detection_sensitivity_scale = ttk.Scale(self, from_=1, to=self.cam_controller.max_detection_sensitivity,
+                                                     variable=tk.IntVar(value=self.cam_controller.detection_sensitivity),
+                                                     length=200, orient=tk.HORIZONTAL)
+        self.detection_sensitivity_scale.grid(row=4, column=1, padx=5, pady=5)
+        self.detection_sensitivity_label = ttk.Label(self, text="Czułość detekcji:")
+        self.detection_sensitivity_label.grid(row=4, column=0, padx=5, pady=5)
+
+        # zmiana minimalnego obszaru ruchu
+        self.min_motion_rectangle_area_scale = ttk.Scale(self, from_=10, to=500,
+                                                         variable=tk.IntVar(value=self.cam_controller.min_motion_rectangle_area),
+                                                         length=200, orient=tk.HORIZONTAL)
+        self.min_motion_rectangle_area_scale.grid(row=5, column=1, padx=5, pady=5)
+        self.min_motion_rectangle_area_label = ttk.Label(self, text="Minimalny obszar ruchu:")
+        self.min_motion_rectangle_area_label.grid(row=5, column=0, padx=5, pady=5,sticky="W")
+
+        self.apply_button = ttk.Button(self, text="Zastosuj", command=self.apply_changes)
+        self.apply_button.grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+
+        ## przyciski
+        buttons_frame = tk.Frame(self)
+        self.start_button = tk.Button(buttons_frame, text="Start", command=self.run_surveillance_thread, width=30, height=2)
+        self.stop_button = tk.Button(buttons_frame, text="Stop", command=self.kill_surveillance_thread, width=30, height=2)
+        self.start_button.grid(row=0, column=0, pady=5)
+        self.stop_button.grid(row=1, column=0, pady=5)
+        buttons_frame.grid(row=1, column=3, pady=10, sticky="E")
+
+        ## okno aplikacji
+        canvas_frame = tk.Frame(self)
+        self.canvas = tk.Canvas(canvas_frame, width=int(self.app_width*0.5), height=int(self.app_height*0.5))
+        self.canvas.pack(padx=10, pady=10)
+        canvas_frame.grid(row=0, column=2, pady=10, columnspan=3,sticky="E")
 
         self.photo = None
 
@@ -46,6 +108,15 @@ class App(tk.Tk):
         self.cam_controller.surveillance_running = False
         self.cam_controller.cam.destroy()
         # ???
+
+    def apply_changes(self):
+            ## funkcja do aktualizowania konfiguracji
+            self.cam_controller.detection_sensitivity = self.detection_sensitivity_scale.get()
+            self.cam_controller.min_motion_rectangle_area = self.min_motion_rectangle_area_scale.get()
+            self.cam_controller.refresh_time=self.refresh_time_scale.get()
+            self.cam_controller.emergency_buff_size=self.emergency_buff_size_scale.get()
+            self.cam_controller.emergency_recording_length=self.emergency_recording_length_scale.get()
+            self.cam_controller.standard_recording_length=self.standard_recording_length_scale.get()
 
     def update_window(self):
         if self.cam_controller.surveillance_running:

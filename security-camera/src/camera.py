@@ -71,7 +71,7 @@ class Camera:
         if success:
             frame_to_save = np.copy(self.frame)
 
-            if frame_to_save is not None:
+            if self.validate_frame(frame_to_save):
                 '''
                     updating buffered frames
                 '''
@@ -83,11 +83,11 @@ class Camera:
         return success
 
     def show_window(self):
-        if self.frame is not None:
+        if self.validate_frame(self.frame):
             cv2.imshow('Capture', self.frame)
 
     def get_motion_contours(self, frame1, frame2):
-        if frame1 is None or frame2 is None:
+        if not self.validate_frame(frame1) or not self.validate_frame(frame2):
             return None
 
         gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame1, self.kernel),
@@ -98,16 +98,24 @@ class Camera:
         binary_diff = cv2.dilate(binary_diff, np.ones(self.kernel), 1)
 
         return cv2.findContours(binary_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)[0]
-
-    def search_for_motion(self):
+    
+    def get_two_frames(self):
         frame1 = np.copy(self.frame)
 
-        if not self.refresh_frame() or frame1 is None:
-            return False
+        if not self.refresh_frame() or not self.validate_frame(frame1):
+            return (False, None, None)
 
         frame2 = np.copy(self.frame)
 
-        if frame2 is None:
+        if not self.validate_frame(frame2):
+            return (False, None, None)
+        
+        return (True, frame1, frame2)
+
+    def search_for_motion(self):
+        success, frame1, frame2 = self.get_two_frames()
+
+        if not success:
             return False
 
         contours = self.get_motion_contours(frame1, frame2)
@@ -136,7 +144,7 @@ class Camera:
         
         frame_to_save = np.copy(self.frame)
 
-        if frame_to_save is not None and self.recording_output is not None:
+        if self.validate_frame(frame_to_save) and self.recording_output is not None:
             try:
                 self.recording_output.write(frame_to_save)
             except:
@@ -161,18 +169,18 @@ class Camera:
             emergency_buff_write_thread.start()
 
         frame_to_save = np.copy(self.frame)
-
-        if frame_to_save is not None:
-            self.emergency_buffered_frames.append(frame_to_save)
+        self.emergency_buffered_frames.append(frame_to_save)
 
     def write_emergency_buffer(self):
         if self.emergency_output is not None:
             while self.emergency_started or len(self.emergency_buffered_frames) > 0:
-                if len(self.emergency_buffered_frames):
-                    try:
-                        self.emergency_output.write(self.emergency_buffered_frames.popleft())
-                    except:
-                        pass
+                if len(self.emergency_buffered_frames) > 0:
+                    frame_to_save = self.emergency_buffered_frames.popleft()
+                    if self.validate_frame(frame_to_save):
+                        try:
+                            self.emergency_output.write(frame_to_save)
+                        except:
+                            pass
 
     def stop_recording(self):
         self.recording_started = False
@@ -193,11 +201,12 @@ class Camera:
 
     def get_standard_frame(self):
         frame = np.copy(self.frame)
-        if frame is not None:
+        if self.validate_frame(frame):
             return self.convert_frame_to_rgb(frame)
 
     def get_sharpened_frame(self):
-        if self.frame is not None:
+        frame = np.copy(self.frame)
+        if self.validate_frame(frame):
             kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
             rgb_frame = self.convert_frame_to_rgb(self.frame)
@@ -205,11 +214,13 @@ class Camera:
             return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
 
     def get_gray_frame(self):
-        if self.frame is not None:
+        frame = np.copy(self.frame)
+        if self.validate_frame(frame):
             return cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
 
     def get_mexican_hat_effect_frame(self):
-        if self.frame is not None:
+        frame = np.copy(self.frame)
+        if self.validate_frame(frame):
             kernel = np.array([[0, 0, -1, 0, 0], [0, -1, -2, -1, 0], [-1, -2, 16, -2, -1],
                                [0, -1, -2, -1, 0], [0, 0, -1, 0, 0]])
 
@@ -218,21 +229,17 @@ class Camera:
             return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
 
     def get_high_contrast_frame(self):
-        if self.frame is not None:
+        frame = np.copy(self.frame)
+        if self.validate_frame(frame):
             gray_frame = self.convert_frame_to_gray_gb(self.frame, self.kernel)
 
             return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
 
     def get_frame_with_contours(self):
-        frame1 = np.copy(self.frame)
+        success, frame1, frame2 = self.get_two_frames()
 
-        if not self.refresh_frame() or frame1 is None:
-            return
-
-        frame2 = np.copy(self.frame)
-
-        if frame2 is None:
-            return
+        if not success:
+            return None
 
         contours = self.get_motion_contours(frame1, frame2)
 
@@ -242,15 +249,10 @@ class Camera:
             return frame2
 
     def get_frame_with_rectangles(self):
-        frame1 = np.copy(self.frame)
+        success, frame1, frame2 = self.get_two_frames()
 
-        if not self.refresh_frame() or frame1 is None:
-            return
-
-        frame2 = np.copy(self.frame)
-
-        if frame2 is None:
-            return
+        if not success:
+            return None
 
         contours = self.get_motion_contours(frame1, frame2)
 
@@ -264,10 +266,16 @@ class Camera:
 
     @staticmethod
     def convert_frame_to_gray_gb(frame, kernel):
-        if frame is not None:
+        frame = np.copy(frame)
+        if Camera.validate_frame(frame):
             return cv2.GaussianBlur(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), kernel, sigmaX=0)
 
     @staticmethod
     def convert_frame_to_rgb(frame):
-        if frame is not None:
+        frame = np.copy(frame)
+        if Camera.validate_frame(frame):
             return cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
+    
+    @staticmethod
+    def validate_frame(frame):
+        return frame is not None and repr(frame) != 'None'

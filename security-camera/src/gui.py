@@ -20,7 +20,7 @@ class App(tk.Tk):
         self.screen_width = self.winfo_screenwidth()
         self.x_coordinate = int((self.screen_width / 2) - (self.app_width / 2))
         self.y_coordinate = int((self.screen_height / 2) - (self.app_height / 2))
-        self.refresh_time = 20
+        self.refresh_time = 30
 
         self.geometry("{}x{}+{}+{}".format(self.app_width, self.app_height, self.x_coordinate, self.y_coordinate))
 
@@ -50,7 +50,7 @@ class App(tk.Tk):
     def update_window(self):
         if self.cam_controller.surveillance_running:
 
-            frame = self.cam_controller.cam.get_standard_frame()
+            frame = self.cam_controller.cam.get_frame_with_rectangles()
 
             if frame is not None:
                 self.photo = ImageTk.PhotoImage(image=Image.fromarray(frame))

@@ -9,9 +9,9 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.cam_controller = Controller(refresh_time=10, emergency_recording_length=5, standard_recording_length=120,
-                                         emergency_buff_size=80, detection_sensitivity=13, max_detection_sensitivity=15,
-                                         min_motion_rectangle_area=100)
+        self.cam_controller = Controller(refresh_time=1, emergency_recording_length=10, standard_recording_length=180,
+                                         emergency_buff_length=4, detection_sensitivity=13, max_detection_sensitivity=15,
+                                         min_motion_rectangle_area=100, fps=24, camera_number=0)
         self.surveillance_thread = None
 
         self.title('Camera window')
@@ -22,7 +22,7 @@ class App(tk.Tk):
         self.x_coordinate = int((self.screen_width / 2) - (self.app_width / 2))
         ## odjęte 30 pikseli ze względu na pasek nawigacyjny Windowsa
         self.y_coordinate = int((self.screen_height / 2) - (self.app_height / 2))-30
-        self.refresh_time = 30
+        self.refresh_time = 1
 
         self.geometry("{}x{}+{}+{}".format(self.app_width, self.app_height, self.x_coordinate, self.y_coordinate))
 
@@ -44,7 +44,7 @@ class App(tk.Tk):
 
 
         ## zmiana długości nagrywania awaryjnego 
-        self.emergency_recording_length_var = tk.IntVar(value=self.cam_controller.emergency_recording_length)
+        self.emergency_recording_length_var = tk.IntVar(value=self.cam_controller.no_emergency_recording_frames)
         self.emergency_recording_length_scale = ttk.Scale(self, from_=1, to=30,
                                                         variable=self.emergency_recording_length_var,
                                                         length=200, orient=tk.HORIZONTAL,
@@ -59,7 +59,7 @@ class App(tk.Tk):
 
 
         ## zmiana długości nagrania standardowego
-        self.standard_recording_length_var = tk.IntVar(value=self.cam_controller.standard_recording_length)
+        self.standard_recording_length_var = tk.IntVar(value=self.cam_controller.no_standard_recording_frames)
 
         self.standard_recording_length_scale = ttk.Scale(self, from_=1, to=250,
                                                      variable=self.standard_recording_length_var,
@@ -73,7 +73,7 @@ class App(tk.Tk):
 
 
         ## zmiana wielkości bufora do nagrania awaryjnego
-        self.emergency_buff_size_var = tk.IntVar(value=self.cam_controller.emergency_buff_size)
+        self.emergency_buff_size_var = tk.IntVar(value=self.cam_controller.no_emergency_buff_frames)
 
         self.emergency_buff_size_scale = ttk.Scale(self, from_=1, to=60,
                                                      variable=self.emergency_buff_size_var,
@@ -102,7 +102,7 @@ class App(tk.Tk):
         # zmiana minimalnego obszaru ruchu
         self.min_motion_rectangle_area_var = tk.IntVar(value=self.cam_controller.min_motion_rectangle_area)
 
-        self.min_motion_rectangle_area_scale = ttk.Scale(self, from_=10, to=500,
+        self.min_motion_rectangle_area_scale = ttk.Scale(self, from_=10, to=5000,
                                                          variable=self.min_motion_rectangle_area_var,
                                                          length=200, orient=tk.HORIZONTAL, command=self.show_scale_value_rect)
         self.min_motion_rectangle_area_scale.grid(row=5, column=1, padx=5, pady=5)
@@ -139,8 +139,9 @@ class App(tk.Tk):
         self.surveillance_thread.start()
 
     def kill_surveillance_thread(self):
-        self.cam_controller.surveillance_running = False
-        self.cam_controller.cam.destroy()
+        if self.cam_controller.cam is not None:
+            self.cam_controller.surveillance_running = False
+            self.cam_controller.cam.destroy()
         # ???
 
     ## funckja do uzyskiwania aktualnej wartości suwaka
@@ -167,13 +168,13 @@ class App(tk.Tk):
             ## funkcja do aktualizowania konfiguracji
             self.cam_controller.detection_sensitivity = self.detection_sensitivity_scale.get()
             self.cam_controller.min_motion_rectangle_area = self.min_motion_rectangle_area_scale.get()
-            self.cam_controller.refresh_time=self.refresh_time_scale.get()
-            self.cam_controller.emergency_buff_size=self.emergency_buff_size_scale.get()
-            self.cam_controller.emergency_recording_length=self.emergency_recording_length_scale.get()
-            self.cam_controller.standard_recording_length=self.standard_recording_length_scale.get()
+            self.cam_controller.refresh_time=int(self.refresh_time_scale.get())
+            self.cam_controller.no_emergency_buff_frames=self.emergency_buff_size_scale.get()
+            self.cam_controller.no_emergency_recording_frames=self.emergency_recording_length_scale.get()
+            self.cam_controller.no_standard_recording_frames=self.standard_recording_length_scale.get()
 
     def update_window(self):
-        if self.cam_controller.surveillance_running:
+        if self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
 
             frame = self.cam_controller.cam.get_frame_with_rectangles()
 

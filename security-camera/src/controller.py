@@ -1,71 +1,89 @@
 import cv2
 from camera import Camera
-import time
+from time import sleep
 
 
 class Controller:
-    '''
-        class responsible for surveillance logic
-    '''
+    """
+        Class responsible for controlling the camera, surveillance logic
+    """
 
-    def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_size,
-                 detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area):
+    def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
+                 detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number):
+
+        # user's config
         self.refresh_time = refresh_time
-        self.emergency_recording_length = emergency_recording_length
-        self.standard_recording_length = standard_recording_length
-        self.emergency_buff_size = emergency_buff_size
+        self.no_emergency_recording_frames = emergency_recording_length * fps
+        self.no_standard_recording_frames = standard_recording_length * fps
+        self.no_emergency_buff_frames = emergency_buff_length * fps
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
         self.min_motion_rectangle_area = min_motion_rectangle_area
-        self.cam = Camera(emergency_buff_size=emergency_buff_size, detection_sensitivity=detection_sensitivity,
-                          max_detection_sensitivity=max_detection_sensitivity,
-                          min_motion_rectangle_area=min_motion_rectangle_area)
+        self.fps = fps
+        self.camera_number = camera_number
 
+        self.cam = None
         self.surveillance_running = False
 
     def start_surveillance(self):
+        """
+            Opens the camera and starts surveillance.
+            :return: None
+        """
+
         self.surveillance_running = True
-        emergency_recording_start_time = None
-        surveillance_start_time = time.time()
+        emergency_recording_loaded_frames = 0
+        standard_recording_loaded_frames = 0
 
-        while not self.cam.validate_capture():
-            '''
-                opening input stream failed, try again
-            '''
+        while self.cam is None or not self.cam.validate_capture():
 
-            self.cam = Camera(emergency_buff_size=self.emergency_buff_size,
+            # if opening input stream failed - try again
+
+            self.cam = Camera(emergency_buff_size=self.no_emergency_buff_frames,
                               detection_sensitivity=self.detection_sensitivity,
                               max_detection_sensitivity=self.max_detection_sensitivity,
-                              min_motion_rectangle_area=self.min_motion_rectangle_area)
+                              min_motion_contour_area=self.min_motion_rectangle_area,
+                              fps=self.fps,
+                              camera_number=self.camera_number)
 
-        standard_recording_start_time = time.time()
+            sleep(0.005)
 
-        while self.surveillance_running:
+        while self.surveillance_running and self.cam is not None:
             self.cam.refresh_frame()
-            self.cam.save_frame()
 
             '''
-                check if standard recording should end
+                standard recording
             '''
-            if time.time() - standard_recording_start_time >= self.standard_recording_length + 1:
-                self.cam.stop_recording()
-                standard_recording_start_time = time.time()
+            # refresh frame and save it to standard recording
+            self.cam.write_standard_recording_frame()
+            standard_recording_loaded_frames += 1
+
+            # check if standard recording should end
+            if standard_recording_loaded_frames >= self.no_standard_recording_frames:
+                self.cam.stop_standard_recording()
+                standard_recording_loaded_frames = 0
 
             '''
-                handle emergency recording
+                emergency recording
             '''
-            if not self.cam.emergency_started:
-                if time.time() - surveillance_start_time >= 2 and self.cam.search_for_motion():
-                    if self.surveillance_running:
-                        emergency_recording_start_time = time.time()
-                        self.cam.emergency_save_frame()
+            # check if emergency recording should start
+            if not self.cam.emergency_recording_started:
+                if self.cam.search_for_motion() and self.surveillance_running:
+                    self.cam.save_emergency_recording_frame(controller=self)
 
-            elif time.time() - emergency_recording_start_time >= self.emergency_recording_length + 1:
+            # check if emergency recording should end
+            elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
                 self.cam.stop_emergency_recording()
+                emergency_recording_loaded_frames = 0
 
+            # save frame to emergency recording
             else:
-                self.cam.emergency_save_frame()
+                self.cam.save_emergency_recording_frame(controller=self)
+                emergency_recording_loaded_frames += 1
 
+            # delay
             if cv2.waitKey(self.refresh_time) == ord('q'):
                 self.cam.destroy()
                 self.surveillance_running = False
+
+        self.cam = None

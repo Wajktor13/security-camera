@@ -1,6 +1,11 @@
+import time
+
 import cv2
+
+import notifactions
 from camera import Camera
 from time import sleep
+from notifactions import *
 
 
 class Controller:
@@ -9,7 +14,8 @@ class Controller:
     """
 
     def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
-                 detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number):
+                 detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
+                 send_system_notifications, min_delay_between_system_notifications):
 
         # user's config
         self.refresh_time = refresh_time
@@ -21,6 +27,8 @@ class Controller:
         self.min_motion_rectangle_area = min_motion_rectangle_area
         self.fps = fps
         self.camera_number = camera_number
+        self.send_system_notifications = send_system_notifications
+        self.min_delay_between_system_notifications = min_delay_between_system_notifications
 
         self.cam = None
         self.surveillance_running = False
@@ -34,6 +42,7 @@ class Controller:
         self.surveillance_running = True
         emergency_recording_loaded_frames = 0
         standard_recording_loaded_frames = 0
+        last_system_notification_time = None
 
         while self.cam is None or not self.cam.validate_capture():
 
@@ -70,6 +79,14 @@ class Controller:
             if not self.cam.emergency_recording_started:
                 if self.cam.search_for_motion() and self.surveillance_running:
                     self.cam.save_emergency_recording_frame(controller=self)
+
+                    if last_system_notification_time is None or True:
+                        last_system_notification_time = time.time()
+                        self.cam.save_frame_to_img()
+                        notifactions.send_system_notification(
+                            path_to_photo=TMP_IMG_NAME + ".JPG",
+                            title="Security Camera",
+                            message="Motion detected!")
 
             # check if emergency recording should end
             elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:

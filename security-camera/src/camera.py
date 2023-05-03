@@ -5,6 +5,7 @@ from threading import Thread
 from collections import deque
 from platform import system
 from time import sleep
+from notifactions import TMP_IMG_NAME
 
 
 class Camera:
@@ -232,6 +233,11 @@ class Camera:
                 self.__emergency_recording_output.release()
             except cv2.error:
                 pass
+
+    def save_frame_to_img(self):
+        frame_to_save = np.copy(self.__frame_new)
+        if self.validate_frame(frame_to_save):
+            cv2.imwrite(TMP_IMG_NAME + ".jpg", frame_to_save)
 
     @staticmethod
     def validate_frame(frame):

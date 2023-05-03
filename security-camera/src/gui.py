@@ -10,8 +10,10 @@ class App(tk.Tk):
         super().__init__()
 
         self.cam_controller = Controller(refresh_time=1, emergency_recording_length=10, standard_recording_length=180,
-                                         emergency_buff_length=4, detection_sensitivity=13, max_detection_sensitivity=15,
-                                         min_motion_rectangle_area=100, fps=24, camera_number=0)
+                                         emergency_buff_length=4, detection_sensitivity=13,
+                                         max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
+                                         camera_number=0, send_system_notifications=True,
+                                         min_delay_between_system_notifications=0)
         self.surveillance_thread = None
 
         self.title('Camera window')

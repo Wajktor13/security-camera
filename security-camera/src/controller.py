@@ -2,7 +2,7 @@ import cv2
 import time
 import logging
 from camera import Camera
-from notifactions import send_system_notification, TMP_IMG_PATH
+from notifications import send_system_notification, TMP_IMG_PATH
 
 
 class Controller:

@@ -1,4 +1,6 @@
 import tkinter as tk
+import logging
+import time
 from tkinter import ttk
 from controller import Controller
 from threading import Thread
@@ -8,6 +10,13 @@ from PIL import Image, ImageTk
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+
+        #logging
+        logging.basicConfig(filename="../logs/" + time.strftime("%d-%m-%Y", time.localtime(time.time())) + ".txt",
+                            level=logging.DEBUG,
+                            format="[%(asctime)s]:[%(levelname)s]:[%(module)s]:%(message)s")
+        self.logger = logging.getLogger("security_camera_logger")
+        self.logger.info("security camera started")
 
         self.cam_controller = Controller(refresh_time=1, emergency_recording_length=10, standard_recording_length=180,
                                          emergency_buff_length=4, detection_sensitivity=13,

@@ -16,7 +16,7 @@ class Camera:
     def __init__(self, emergency_buff_size, detection_sensitivity, max_detection_sensitivity,
                  min_motion_contour_area, fps, camera_number):
         # logging
-        self.logger = logging.getLogger("security_camera_logger")
+        self.__logger = logging.getLogger("security_camera_logger")
 
         # user's config
         self.min_motion_contour_area = min_motion_contour_area
@@ -41,11 +41,11 @@ class Camera:
         if system() == "Windows":
             self.__fourcc_codec = cv2.VideoWriter_fourcc(*'h264')
             self.__capture = cv2.VideoCapture(self.camera_number, cv2.CAP_DSHOW)
-            self.logger.info("using h264 video codec on Windows")
+            self.__logger.info("using h264 video codec on Windows")
         else:
             self.__fourcc_codec = cv2.VideoWriter_fourcc(*'mp4v')
             self.__capture = cv2.VideoCapture(self.camera_number)
-            self.logger.info("using mp4v video codec on Linux")
+            self.__logger.info("using mp4v video codec on Linux")
 
         self.frame_dimensions = (640, 480)
         self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_dimensions[0])
@@ -69,7 +69,7 @@ class Camera:
         self.__capture.release()
         cv2.destroyAllWindows()
 
-        self.logger.info("recordings stopped, camera destroyed")
+        self.__logger.info("recordings stopped, camera destroyed")
 
     def refresh_frame(self):
         """
@@ -94,7 +94,7 @@ class Camera:
                     if len(self.__emergency_recording_buffered_frames) > self.emergency_buff_size:
                         self.__emergency_recording_buffered_frames.popleft()
         else:
-            self.logger.warning("failed to refresh frame")
+            self.__logger.warning("failed to refresh frame")
 
         return success
 
@@ -167,7 +167,7 @@ class Camera:
             self.__standard_recording_output = cv2.VideoWriter(recording_file_path, self.__fourcc_codec,
                                                                self.standard_recording_fps, self.frame_dimensions)
 
-            self.logger.info("standard recording started")
+            self.__logger.info("standard recording started")
 
         frame_to_save = np.copy(self.__frame_new)
 
@@ -175,7 +175,7 @@ class Camera:
             try:
                 self.__standard_recording_output.write(frame_to_save)
             except cv2.error:
-                self.logger.error("failed to write frame to standard recording")
+                self.__logger.error("failed to write frame to standard recording")
 
     def save_emergency_recording_frame(self, controller):
         """
@@ -198,7 +198,7 @@ class Camera:
             emergency_buff_write_thread = Thread(target=self.write_emergency_buffer, args=(controller,))
             emergency_buff_write_thread.start()
 
-            self.logger.info("emergency recording started")
+            self.__logger.info("emergency recording started")
 
         frame_to_save = np.copy(self.__frame_new)
         self.__emergency_recording_buffered_frames.append(frame_to_save)
@@ -218,9 +218,9 @@ class Camera:
                         try:
                             self.__emergency_recording_output.write(frame_to_save)
                         except cv2.error:
-                            self.logger.error("failed to write frame to emergency recording")
+                            self.__logger.error("failed to write frame to emergency recording")
                     else:
-                        self.logger.warning("write_emergency_buffer() - failed to validate frames")
+                        self.__logger.warning("write_emergency_buffer() - failed to validate frames")
 
                 sleep(0.0001)
 
@@ -234,9 +234,9 @@ class Camera:
         if self.__standard_recording_output is not None:
             try:
                 self.__standard_recording_output.release()
-                self.logger.info("standard recording stopped")
+                self.__logger.info("standard recording stopped")
             except cv2.error:
-                self.logger.error("failed to release standard recording output")
+                self.__logger.error("failed to release standard recording output")
 
     def stop_emergency_recording(self):
         """
@@ -248,9 +248,9 @@ class Camera:
         if self.__emergency_recording_output is not None:
             try:
                 self.__emergency_recording_output.release()
-                self.logger.info("emergency recording stopped")
+                self.__logger.info("emergency recording stopped")
             except cv2.error:
-                self.logger.error("failed to release emergency recording output")
+                self.__logger.error("failed to release emergency recording output")
 
     def save_frame_to_img(self, path):
         """
@@ -262,7 +262,7 @@ class Camera:
         if self.validate_frame(frame_to_save):
             cv2.imwrite(path, frame_to_save)
         else:
-            self.logger.warning("save_frame_to_img() - failed to validate frame")
+            self.__logger.warning("save_frame_to_img() - failed to validate frame")
 
     @staticmethod
     def validate_frame(frame):
@@ -277,7 +277,7 @@ class Camera:
         if self.validate_frame(frame):
             return self.convert_frame_to_rgb(frame)
         else:
-            self.logger.warning("get_standard_frame() - failed to validate frame")
+            self.__logger.warning("get_standard_frame() - failed to validate frame")
 
     def get_sharpened_frame(self):
         frame = np.copy(self.__frame_new)
@@ -288,14 +288,14 @@ class Camera:
 
             return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
         else:
-            self.logger.warning("get_sharpened_frame() - failed to validate frame")
+            self.__logger.warning("get_sharpened_frame() - failed to validate frame")
 
     def get_gray_frame(self):
         frame = np.copy(self.__frame_new)
         if self.validate_frame(frame):
             return cv2.cvtColor(self.__frame_new, cv2.COLOR_BGR2GRAY)
         else:
-            self.logger.warning("get_gray_frame() - failed to validate frame")
+            self.__logger.warning("get_gray_frame() - failed to validate frame")
 
     def get_mexican_hat_effect_frame(self):
         frame = np.copy(self.__frame_new)
@@ -307,7 +307,7 @@ class Camera:
 
             return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
         else:
-            self.logger.warning("get_mexican_hat_effect_frame() - failed to validate frame")
+            self.__logger.warning("get_mexican_hat_effect_frame() - failed to validate frame")
 
     def get_high_contrast_frame(self):
         frame = np.copy(self.__frame_new)
@@ -317,7 +317,7 @@ class Camera:
 
             return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
         else:
-            self.logger.warning("get_high_contrast_frame() - failed to validate frame")
+            self.__logger.warning("get_high_contrast_frame() - failed to validate frame")
 
     def get_frame_with_contours(self):
         contours = self.get_motion_contours_with_min_area()

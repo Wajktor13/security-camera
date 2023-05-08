@@ -11,18 +11,20 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        #logging
+        # logging
         logging.basicConfig(filename="../logs/" + time.strftime("%d-%m-%Y", time.localtime(time.time())) + ".txt",
                             level=logging.DEBUG,
                             format="[%(asctime)s]:[%(levelname)s]:[%(module)s]:%(message)s")
-        self.logger = logging.getLogger("security_camera_logger")
-        self.logger.info("security camera started")
+        self.__logger = logging.getLogger("security_camera_logger")
+        self.__logger.info("security camera started")
 
         self.cam_controller = Controller(refresh_time=1, emergency_recording_length=10, standard_recording_length=180,
                                          emergency_buff_length=4, detection_sensitivity=13,
                                          max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
                                          camera_number=0, send_system_notifications=True,
-                                         min_delay_between_system_notifications=0)
+                                         min_delay_between_system_notifications=0,
+                                         send_email_notifications=False,
+                                         min_delay_between_email_notifications=0)
         self.surveillance_thread = None
 
         self.title('Camera window')

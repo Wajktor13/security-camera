@@ -254,7 +254,7 @@ class Camera:
 
     def save_frame_to_img(self, path):
         """
-            Saves frames to specified location.
+            Saves frame to specified location.
             :return: None
         """
 

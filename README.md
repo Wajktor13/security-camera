@@ -17,5 +17,7 @@ Harmonogram pracy:
    - wysyłanie nagrań na dysk
    - statystyki
 
-Opcjonalnie:
-   - log systemowy / usera
+Inne / Opcjonalne:
+   - log systemowy / usera ✅
+   - zapisywanie ustawień do pliku JSON - ładowanie przy każdym uruchomieniu
+   - tryb niskiego zużycia zasobów

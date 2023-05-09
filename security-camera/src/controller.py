@@ -96,7 +96,7 @@ class Controller:
                         self.cam.save_frame_to_img(self.notification_sender.tmp_img_path + ".jpg")
 
                         self.notification_sender.send_system_notification(
-                            path_to_photo=self.notification_sender.tmp_img_path + ".JPG",
+                            path_to_photo=self.notification_sender.tmp_img_path + ".jpg",
                             title="Security Camera",
                             message="Motion detected!")
 
@@ -106,7 +106,8 @@ class Controller:
                         last_email_notification_time = time.time()
                         self.notification_sender.send_email_notification(recipient="wajktor007@gmail.com",
                                                                          subject="Motion detected!",
-                                                                         body="Check recordings.")
+                                                                         body="Check recordings.",
+                                                                         path_to_photo=self.notification_sender.tmp_img_path)
 
             # check if emergency recording should end
             elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:

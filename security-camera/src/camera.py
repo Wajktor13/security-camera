@@ -175,7 +175,7 @@ class Camera:
             try:
                 self.__standard_recording_output.write(frame_to_save)
             except cv2.error:
-                self.__logger.error("failed to write frame to standard recording")
+                self.__logger.exception("failed to write frame to standard recording")
 
     def save_emergency_recording_frame(self, controller):
         """
@@ -218,7 +218,7 @@ class Camera:
                         try:
                             self.__emergency_recording_output.write(frame_to_save)
                         except cv2.error:
-                            self.__logger.error("failed to write frame to emergency recording")
+                            self.__logger.exception("failed to write frame to emergency recording")
                     else:
                         self.__logger.warning("write_emergency_buffer() - failed to validate frames")
 
@@ -236,7 +236,7 @@ class Camera:
                 self.__standard_recording_output.release()
                 self.__logger.info("standard recording stopped")
             except cv2.error:
-                self.__logger.error("failed to release standard recording output")
+                self.__logger.exception("failed to release standard recording output")
 
     def stop_emergency_recording(self):
         """
@@ -250,7 +250,7 @@ class Camera:
                 self.__emergency_recording_output.release()
                 self.__logger.info("emergency recording stopped")
             except cv2.error:
-                self.__logger.error("failed to release emergency recording output")
+                self.__logger.exception("failed to release emergency recording output")
 
     def save_frame_to_img(self, path):
         """

@@ -11,7 +11,7 @@ Harmonogram pracy:
    - rozbudowa GUI m.in o podstawowe opcje konfiguracyjne✅
    - różne tryby obrazu ✅
 4. LAB5
-   - powiadomienia (system i mail)
+   - powiadomienia (system i mail) ✅
    - rozbudowane opcje konfiguracyjne
 5. LAB6
    - wysyłanie nagrań na dysk

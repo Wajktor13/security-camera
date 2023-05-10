@@ -114,6 +114,7 @@ class Camera:
         """
 
         if not self.validate_frame(self.__frame_new) or not self.validate_frame(self.__frame_old):
+            # self.__logger.warning("get_motion_contours() - failed to validate frames")
             return None
 
         kernel = (3, 3)
@@ -350,5 +351,5 @@ class Camera:
         frame = np.copy(frame)
         if Camera.validate_frame(frame):
             return cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
-        else:
-            logging.warning("convert_frame_to_rgb() - failed to validate frame")
+        # else:
+        #     logging.warning("convert_frame_to_rgb() - failed to validate frame")

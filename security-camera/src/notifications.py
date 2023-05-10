@@ -20,6 +20,7 @@ class NotificationSender:
         self.__logger = logging.getLogger("security_camera_logger")
 
         self.tmp_img_path = "tmp/tmp"
+        self.email_login_data_path = "../config/notification_email_login_data.json"
 
     def send_system_notification(self, path_to_photo, title, message):
         self.prepare_photo(path_to_photo)
@@ -33,19 +34,19 @@ class NotificationSender:
 
     def send_email_notification(self, recipient, subject, body, path_to_photo):
         path_to_photo += ".jpg"
-        with open(path_to_photo, 'rb') as f:
+        with open(path_to_photo, "rb") as f:
             img_data = f.read()
 
         port = 465
         smtp_server = "smtp.gmail.com"
-        login_data = load(open('../config/notification_email_login_data.json'))
-        sender_email = login_data['login']
-        application_password = login_data['applicationPassword']
+        login_data = load(open(self.email_login_data_path))
+        sender_email = login_data["login"]
+        application_password = login_data["applicationPassword"]
 
         msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = recipient
-        msg['Subject'] = subject
+        msg["From"] = sender_email
+        msg["To"] = recipient
+        msg["Subject"] = subject
         body = MIMEText(body)
         msg.attach(body)
         img = MIMEImage(img_data, name=os.path.basename(path_to_photo))

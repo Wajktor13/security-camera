@@ -22,9 +22,10 @@ class App(tk.Tk):
                                          emergency_buff_length=4, detection_sensitivity=13,
                                          max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
                                          camera_number=0, send_system_notifications=True,
-                                         min_delay_between_system_notifications=0,
+                                         min_delay_between_system_notifications=30,
                                          send_email_notifications=False,
-                                         min_delay_between_email_notifications=0)
+                                         min_delay_between_email_notifications=240,
+                                         email_recipient="wajktor007@gmail.com")
         self.surveillance_thread = None
 
         self.title('Camera window')
@@ -149,13 +150,14 @@ class App(tk.Tk):
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)
+        self.__logger.info("surveillance thread started")
         self.surveillance_thread.start()
 
     def kill_surveillance_thread(self):
         if self.cam_controller.cam is not None:
             self.cam_controller.surveillance_running = False
             self.cam_controller.cam.destroy()
-        # ???
+        self.__logger.info("surveillance thread stopped")
 
     ## funckja do uzyskiwania aktualnej wartości suwaka
     def show_scale_value_emergency(self, value):

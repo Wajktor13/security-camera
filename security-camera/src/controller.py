@@ -1,6 +1,7 @@
 import cv2
 import time
 import logging
+from threading import Thread
 from camera import Camera
 from notifications import NotificationSender
 
@@ -13,7 +14,7 @@ class Controller:
     def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
                  detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
                  send_system_notifications, min_delay_between_system_notifications, send_email_notifications,
-                 min_delay_between_email_notifications):
+                 min_delay_between_email_notifications, email_recipient):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
@@ -31,11 +32,14 @@ class Controller:
         self.min_delay_between_system_notifications = min_delay_between_system_notifications
         self.send_email_notifications = send_email_notifications
         self.min_delay_between_email_notifications = min_delay_between_email_notifications
+        self.email_recipient = email_recipient
 
         # other
         self.cam = None
         self.surveillance_running = False
         self.notification_sender = NotificationSender()
+        self.email_title = "motion detected!"
+        self.email_body = "check recordings"
 
     def start_surveillance(self):
         """
@@ -92,22 +96,33 @@ class Controller:
                     if self.send_system_notifications and (last_system_notification_time is None or
                                                            time.time() - last_system_notification_time >
                                                            self.min_delay_between_system_notifications):
+                        
                         last_system_notification_time = time.time()
+
                         self.cam.save_frame_to_img(self.notification_sender.tmp_img_path + ".jpg")
 
-                        self.notification_sender.send_system_notification(
-                            path_to_photo=self.notification_sender.tmp_img_path + ".jpg",
-                            title="Security Camera",
-                            message="Motion detected!")
+                        system_notification_thread = Thread(target=self.notification_sender.send_system_notification,
+                                                            args=[self.notification_sender.tmp_img_path + ".jpg",
+                                                                  "Security Camera", "Motion detected!"])
+                        
+                        self.__logger.info("system notification thread started")
+                        system_notification_thread.start()
+                        
 
                     if self.send_email_notifications and (last_email_notification_time is None or
                                                           time.time() - last_email_notification_time >
-                                                          self.min_delay_between_system_notifications):
+                                                          self.min_delay_between_email_notifications):
+                        
                         last_email_notification_time = time.time()
-                        self.notification_sender.send_email_notification(recipient="wajktor007@gmail.com",
-                                                                         subject="Motion detected!",
-                                                                         body="Check recordings.",
-                                                                         path_to_photo=self.notification_sender.tmp_img_path)
+
+                        email_notification_thread = Thread(target=self.notification_sender.send_email_notification,
+                                                           args=[self.email_recipient,
+                                                                 self.email_title,
+                                                                 self.email_body,
+                                                                 self.notification_sender.tmp_img_path])
+
+                        self.__logger.info("email notification thread started")
+                        email_notification_thread.start()
 
             # check if emergency recording should end
             elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:

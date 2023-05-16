@@ -12,7 +12,7 @@ Harmonogram pracy:
    - różne tryby obrazu ✅
 4. LAB5
    - powiadomienia (system i mail) ✅
-   - rozbudowane opcje konfiguracyjne
+   - rozbudowane opcje konfiguracyjne ✅
 5. LAB6
    - wysyłanie nagrań na dysk
    - statystyki

@@ -18,9 +18,11 @@ class NotificationSender:
     def __init__(self):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
-
+        
         self.tmp_img_path = "tmp/tmp"
+        #self.tmp_img_path = "../security camera vol2/security-camera/security-camera/src/tmp/tmp"
         self.email_login_data_path = "../config/notification_email_login_data.json"
+        print(os.path.abspath(self.tmp_img_path))
 
     def send_system_notification(self, path_to_photo, title, message):
         self.prepare_photo(path_to_photo)

@@ -19,10 +19,10 @@ class Controller:
         self.__logger = logging.getLogger("security_camera_logger")
 
         # user's config
+        self.emergency_recording_length = emergency_recording_length
+        self.standard_recording_length = standard_recording_length
+        self.emergency_buff_length = emergency_buff_length
         self.refresh_time = refresh_time
-        self.no_emergency_recording_frames = emergency_recording_length * fps
-        self.no_standard_recording_frames = standard_recording_length * fps
-        self.no_emergency_buff_frames = emergency_buff_length * fps
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
         self.min_motion_rectangle_area = min_motion_rectangle_area
@@ -35,11 +35,24 @@ class Controller:
         self.email_recipient = email_recipient
 
         # other
+        self.no_emergency_recording_frames = emergency_recording_length * fps
+        self.no_standard_recording_frames = standard_recording_length * fps
+        self.no_emergency_buff_frames = emergency_buff_length * fps
         self.cam = None
         self.surveillance_running = False
         self.notification_sender = NotificationSender()
-        self.email_title = "motion detected!"
-        self.email_body = "check recordings"
+
+    def update_parameters(self):
+        if self.cam is not None:
+            self.cam.emergency_buff_size = self.emergency_buff_length * self.fps
+            self.cam.detection_sensitivity = self.detection_sensitivity
+            self.cam.max_detection_sensitivity = self.max_detection_sensitivity
+            self.cam.min_motion_contour_area = self.min_motion_rectangle_area
+            self.cam.standard_recording_fps = self.cam.emergency_recording_fps = self.fps
+            self.cam.camera_number = self.camera_number
+
+            self.no_emergency_recording_frames = self.emergency_recording_length * self.fps
+            self.no_standard_recording_frames = self.standard_recording_length * self.fps
 
     def start_surveillance(self):
         """
@@ -54,7 +67,6 @@ class Controller:
         last_email_notification_time = None
 
         while self.cam is None or not self.cam.validate_capture():
-
             # opening input stream failed - try again
 
             self.__logger.warning("failed to open input stream")
@@ -96,7 +108,6 @@ class Controller:
                     if self.send_system_notifications and (last_system_notification_time is None or
                                                            time.time() - last_system_notification_time >
                                                            self.min_delay_between_system_notifications):
-                        
                         last_system_notification_time = time.time()
 
                         self.cam.save_frame_to_img(self.notification_sender.tmp_img_path + ".jpg")
@@ -104,21 +115,19 @@ class Controller:
                         system_notification_thread = Thread(target=self.notification_sender.send_system_notification,
                                                             args=[self.notification_sender.tmp_img_path + ".jpg",
                                                                   "Security Camera", "Motion detected!"])
-                        
+
                         self.__logger.info("system notification thread started")
                         system_notification_thread.start()
-                        
 
                     if self.send_email_notifications and (last_email_notification_time is None or
                                                           time.time() - last_email_notification_time >
                                                           self.min_delay_between_email_notifications):
-                        
                         last_email_notification_time = time.time()
 
                         email_notification_thread = Thread(target=self.notification_sender.send_email_notification,
                                                            args=[self.email_recipient,
-                                                                 self.email_title,
-                                                                 self.email_body,
+                                                                 "motion detected!",
+                                                                 "check recordings",
                                                                  self.notification_sender.tmp_img_path])
 
                         self.__logger.info("email notification thread started")

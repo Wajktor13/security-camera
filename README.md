@@ -14,7 +14,7 @@ Harmonogram pracy:
    - powiadomienia (system i mail) ✅
    - rozbudowane opcje konfiguracyjne ✅
 5. LAB6
-   - wysyłanie nagrań na dysk
+   - wysyłanie nagrań na dysk ✅
    - statystyki
 
 Inne / Opcjonalne:

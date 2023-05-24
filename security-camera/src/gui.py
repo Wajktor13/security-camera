@@ -3,6 +3,9 @@ import logging
 import re
 import time
 import datetime
+import subprocess
+import os
+import platform
 from tkinter import ttk
 from controller import Controller
 from threading import Thread
@@ -21,14 +24,13 @@ class App(tk.Tk):
         self.__logger.info("security camera started")
 
         self.cam_controller = Controller(refresh_time=10, emergency_recording_length=10, standard_recording_length=180,
-                                         emergency_buff_length=4, detection_sensitivity=13,
+                                         emergency_buff_length=4, detection_sensitivity=12,
                                          max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
                                          camera_number=0, send_system_notifications=True,
                                          min_delay_between_system_notifications=30, send_email_notifications=False,
                                          min_delay_between_email_notifications=240,
                                          email_recipient="wajktor007@gmail.com", upload_to_gdrive=True)
         self.surveillance_thread = None
-
         self.title('Camera window')
         self.app_height = int(self.winfo_screenheight()) - 70
         self.app_width = int(self.winfo_screenwidth())
@@ -194,6 +196,11 @@ class App(tk.Tk):
         self.stop_button.grid(row=1, column=0, pady=5)
         buttons_frame.grid(row=6, column=3, pady=10, sticky="E")
 
+        self.go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings",
+                                                  command=self.open_recordings_folder, width=30, height=2)
+        self.go_to_recordings_buttons.grid(row=0, column=1, pady=5, padx=50)
+
+
         ## okno aplikacji
         canvas_frame = tk.Frame(self)
         self.canvas = tk.Canvas(canvas_frame, width=int(self.app_width * 0.7), height=int(self.app_height * 0.5))
@@ -349,3 +356,12 @@ class App(tk.Tk):
                 self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)
+
+    @staticmethod
+    def open_recordings_folder():
+        path = os.path.realpath("../recordings")
+
+        if platform.system() == 'Windows':
+            subprocess.Popen(["explorer", path])
+        else:
+            subprocess.Popen(["xdg-open", path])

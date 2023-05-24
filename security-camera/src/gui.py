@@ -14,7 +14,7 @@ class App(tk.Tk):
         super().__init__()
 
         # logging
-        logging.basicConfig(filename="../logs/" + time.strftime("%d-%m-%Y", time.localtime(time.time())) + ".txt",
+        logging.basicConfig(filename="../logs/" + time.strftime("%d-%m-%Y", time.localtime(time.time())) + ".log",
                             level=logging.DEBUG,
                             format="[%(asctime)s]:[%(levelname)s]:[%(module)s]:%(message)s")
         self.__logger = logging.getLogger("security_camera_logger")
@@ -24,10 +24,9 @@ class App(tk.Tk):
                                          emergency_buff_length=4, detection_sensitivity=13,
                                          max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
                                          camera_number=0, send_system_notifications=True,
-                                         min_delay_between_system_notifications=30,
-                                         send_email_notifications=False,
+                                         min_delay_between_system_notifications=30, send_email_notifications=False,
                                          min_delay_between_email_notifications=240,
-                                         email_recipient="wajktor007@gmail.com")
+                                         email_recipient="wajktor007@gmail.com", upload_to_gdrive=True)
         self.surveillance_thread = None
 
         self.title('Camera window')

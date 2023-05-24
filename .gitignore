@@ -4,4 +4,4 @@ security-camera/src/__pycache__
 .idea
 security-camera/src/tmp/tmp.ico
 security-camera/src/tmp/tmp.jpg
-security-camera/logs/*.txt
+security-camera/logs/*.log

@@ -1,0 +1,4 @@
+client_config_file: ../config/google_drive/client_config.json
+save_credentials: True
+save_credentials_backend: file
+save_credentials_file: ../config/google_drive/google_auth_credentials.json

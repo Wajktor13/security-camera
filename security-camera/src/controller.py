@@ -1,6 +1,7 @@
 import cv2
 import time
 import logging
+import gdrive
 from threading import Thread
 from camera import Camera
 from notifications import NotificationSender
@@ -14,7 +15,7 @@ class Controller:
     def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
                  detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
                  send_system_notifications, min_delay_between_system_notifications, send_email_notifications,
-                 min_delay_between_email_notifications, email_recipient):
+                 min_delay_between_email_notifications, email_recipient, upload_to_gdrive):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
@@ -33,6 +34,8 @@ class Controller:
         self.send_email_notifications = send_email_notifications
         self.min_delay_between_email_notifications = min_delay_between_email_notifications
         self.email_recipient = email_recipient
+        self.upload_to_gdrive = upload_to_gdrive
+        self.gdrive_folder_id = "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y"
 
         # other
         self.no_emergency_recording_frames = emergency_recording_length * fps
@@ -116,8 +119,8 @@ class Controller:
                                                             args=[self.notification_sender.tmp_img_path + ".jpg",
                                                                   "Security Camera", "Motion detected!"])
 
-                        self.__logger.info("system notification thread started")
                         system_notification_thread.start()
+                        self.__logger.info("system notification thread started")
 
                     if self.send_email_notifications and (last_email_notification_time is None or
                                                           time.time() - last_email_notification_time >
@@ -130,13 +133,23 @@ class Controller:
                                                                  "check recordings",
                                                                  self.notification_sender.tmp_img_path])
 
-                        self.__logger.info("email notification thread started")
                         email_notification_thread.start()
+                        self.__logger.info("email notification thread started")
 
             # check if emergency recording should end
             elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
-                self.cam.stop_emergency_recording()
+                file_path = self.cam.stop_emergency_recording()
                 emergency_recording_loaded_frames = 0
+
+                if self.upload_to_gdrive and file_path is not None:
+                    gdrive_upload_thread = Thread(target=gdrive.upload_to_cloud,
+                                                  args=[
+                                                      file_path,
+                                                      (file_path.split("/"))[-1],
+                                                      self.gdrive_folder_id])
+
+                    gdrive_upload_thread.start()
+                    self.__logger.info("system notification thread started")
 
             # save frame to emergency recording
             else:

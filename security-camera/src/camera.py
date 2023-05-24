@@ -35,6 +35,7 @@ class Camera:
         self.__emergency_recording_output = None
         self.__emergency_recording_buffered_frames = deque()
         self.emergency_recording_fps = fps
+        self.emergency_file_path = None
 
         # capture config
         # todo: test h264 lib for linux
@@ -192,8 +193,8 @@ class Camera:
 
             self.emergency_recording_started = True
             current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
-            emergency_file_path = f'../recordings/emergency/{current_recording_time}.mkv'
-            self.__emergency_recording_output = cv2.VideoWriter(emergency_file_path, self.__fourcc_codec,
+            self.emergency_file_path = f'../recordings/emergency/{current_recording_time}.mkv'
+            self.__emergency_recording_output = cv2.VideoWriter(self.emergency_file_path, self.__fourcc_codec,
                                                                 self.emergency_recording_fps, self.frame_dimensions)
 
             emergency_buff_write_thread = Thread(target=self.write_emergency_buffer, args=(controller,))
@@ -242,7 +243,7 @@ class Camera:
     def stop_emergency_recording(self):
         """
             Stops emergency recording and releases emergency recording output.
-            :return: None
+            :return: file path of emergency recording that just finished on success, None on fail
         """
 
         self.emergency_recording_started = False
@@ -252,6 +253,9 @@ class Camera:
                 self.__logger.info("emergency recording stopped")
             except cv2.error:
                 self.__logger.exception("failed to release emergency recording output")
+                return None
+
+        return self.emergency_file_path
 
     def save_frame_to_img(self, path):
         """

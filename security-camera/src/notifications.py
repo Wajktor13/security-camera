@@ -20,7 +20,7 @@ class NotificationSender:
         self.__logger = logging.getLogger("security_camera_logger")
         
         self.tmp_img_path = "tmp/tmp"
-        self.email_login_data_path = "../config/notification_email_login_data.json"
+        self.email_login_data_path = "../config/notification_email_credentials.json"
         print(os.path.abspath(self.tmp_img_path))
 
     def send_system_notification(self, path_to_photo, title, message):

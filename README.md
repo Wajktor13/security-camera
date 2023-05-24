@@ -21,4 +21,4 @@ Inne / Opcjonalne:
    - log systemowy / usera ✅
    - zapisywanie ustawień do pliku JSON - ładowanie przy każdym uruchomieniu
    - tryb niskiego zużycia zasobów
-   - przycisk otwierający folder z nagraniami
+   - przycisk otwierający folder z nagraniami ✅

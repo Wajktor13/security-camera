@@ -8,9 +8,7 @@ from notifications import NotificationSender
 
 
 class Controller:
-    """
-        Class responsible for controlling the camera, surveillance logic
-    """
+    """Class responsible for controlling the camera, surveillance logic"""
 
     def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
                  detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
@@ -58,10 +56,8 @@ class Controller:
             self.no_standard_recording_frames = self.standard_recording_length * self.fps
 
     def start_surveillance(self):
-        """
-            Opens the camera and starts surveillance.
-            :return: None
-        """
+        """Opens the camera and starts surveillance.
+            :return: None"""
 
         self.surveillance_running = True
         emergency_recording_loaded_frames = 0
@@ -86,9 +82,7 @@ class Controller:
         while self.surveillance_running and self.cam is not None:
             self.cam.refresh_frame()
 
-            '''
-                standard recording
-            '''
+            '''standard recording'''
             # refresh frame and save it to standard recording
             if self.surveillance_running:
                 self.cam.write_standard_recording_frame()
@@ -99,9 +93,7 @@ class Controller:
                 self.cam.stop_standard_recording()
                 standard_recording_loaded_frames = 0
 
-            '''
-                emergency recording
-            '''
+            '''emergency recording'''
             # check if emergency recording should start
             if not self.cam.emergency_recording_started:
                 if self.cam.search_for_motion() and self.surveillance_running:

@@ -9,9 +9,7 @@ from time import sleep
 
 
 class Camera:
-    """
-        Class responsible for handling input from the video source, detecting motion, saving videos
-    """
+    """Class responsible for handling input from the video source, detecting motion, saving videos"""
 
     def __init__(self, emergency_buff_size, detection_sensitivity, max_detection_sensitivity,
                  min_motion_contour_area, fps, camera_number):
@@ -60,10 +58,8 @@ class Camera:
         return self.__capture.isOpened()
 
     def destroy(self):
-        """
-            Stops emergency and standard recording, releases the capture, destroys the windows of OpenCV
-            :return: None
-        """
+        """Stops emergency and standard recording, releases the capture, destroys the windows of OpenCV
+            :return: None"""
 
         self.stop_emergency_recording()
         self.stop_standard_recording()
@@ -73,19 +69,15 @@ class Camera:
         self.__logger.info("recordings stopped, camera destroyed")
 
     def refresh_frame(self):
-        """
-            Grabs new frame from the capture, updates emergency buffer
-            :return: True on success, False on fail
-        """
+        """Grabs new frame from the capture, updates emergency buffer
+            :return: True on success, False on fail"""
 
         self.__frame_old = self.__frame_new
         success, self.__frame_new = self.__capture.read()
 
         if success:
             if not self.emergency_recording_started:
-                '''
-                    update emergency buffer
-                '''
+                '''update emergency buffer'''
 
                 frame_to_save = np.copy(self.__frame_new)
 
@@ -100,19 +92,15 @@ class Camera:
         return success
 
     def show_window(self):
-        """
-            Shows standard OpenCV window with the captured frame
-            :return: None
-        """
+        """Shows standard OpenCV window with the captured frame
+            :return: None"""
 
         if self.validate_frame(self.__frame_new):
             cv2.imshow('Capture', self.__frame_new)
 
     def get_motion_contours(self):
-        """
-            Looks for contours around places in the new frame that are different from the old frame
-            :return: list with contours on success, None if frames are corrupted / doesn't exist
-        """
+        """Looks for contours around places in the new frame that are different from the old frame
+            :return: list with contours on success, None if frames are corrupted / doesn't exist"""
 
         if not self.validate_frame(self.__frame_new) or not self.validate_frame(self.__frame_old):
             # self.__logger.warning("get_motion_contours() - failed to validate frames")
@@ -140,10 +128,8 @@ class Camera:
             return tuple(filter(lambda c: cv2.contourArea(c) >= self.min_motion_contour_area, [c for c in contours]))
 
     def search_for_motion(self):
-        """
-            Checks if list of contours contains contour with min specified area
-            :return: True if contour with min specified area exists, False otherwise
-        """
+        """Checks if list of contours contains contour with min specified area
+            :return: True if contour with min specified area exists, False otherwise"""
 
         contours = self.get_motion_contours_with_min_area()
 
@@ -153,15 +139,11 @@ class Camera:
         return False
 
     def write_standard_recording_frame(self):
-        """
-            Writes frame into the standard output video file. If output doesn't exist, creates a new one
-            :return: None
-        """
+        """Writes frame into the standard output video file. If output doesn't exist, creates a new one
+            :return: None"""
 
         if not self.standard_recording_started:
-            '''
-                create new standard output
-            '''
+            '''create new standard output'''
 
             self.standard_recording_started = True
             current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
@@ -180,16 +162,12 @@ class Camera:
                 self.__logger.exception("failed to write frame to standard recording")
 
     def save_emergency_recording_frame(self, controller):
-        """
-            Appends frame into emergency buffer and runs thread that writes buffered frames into emergency output video
+        """Appends frame into emergency buffer and runs thread that writes buffered frames into emergency output video
             file . If output doesn't exist, creates a new one
-            :return: None
-        """
+            :return: None"""
 
         if not self.emergency_recording_started:
-            '''
-                create new emergency output
-            '''
+            '''create new emergency output'''
 
             self.emergency_recording_started = True
             current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
@@ -206,10 +184,8 @@ class Camera:
         self.__emergency_recording_buffered_frames.append(frame_to_save)
 
     def write_emergency_buffer(self, controller):
-        """
-            Writes buffered frames into emergency output file
-            :return: None
-        """
+        """Writes buffered frames into emergency output file
+            :return: None"""
 
         if self.__emergency_recording_output is not None:
             while (self.emergency_recording_started or len(self.__emergency_recording_buffered_frames) > 0) and \
@@ -227,10 +203,8 @@ class Camera:
                 sleep(0.0001)
 
     def stop_standard_recording(self):
-        """
-            Stops standard recording and releases standard recording output.
-            :return: None
-        """
+        """Stops standard recording and releases standard recording output.
+            :return: None"""
 
         self.standard_recording_started = False
         if self.__standard_recording_output is not None:
@@ -241,10 +215,8 @@ class Camera:
                 self.__logger.exception("failed to release standard recording output")
 
     def stop_emergency_recording(self):
-        """
-            Stops emergency recording and releases emergency recording output.
-            :return: file path of emergency recording that just finished on success, None on fail
-        """
+        """Stops emergency recording and releases emergency recording output.
+            :return: file path of emergency recording that just finished on success, None on fail"""
 
         self.emergency_recording_started = False
         if self.__emergency_recording_output is not None:
@@ -258,10 +230,8 @@ class Camera:
         return self.emergency_file_path
 
     def save_frame_to_img(self, path):
-        """
-            Saves frame to specified location.
-            :return: None
-        """
+        """Saves frame to specified location.
+            :return: None"""
 
         frame_to_save = np.copy(self.__frame_new)
         if self.validate_frame(frame_to_save):
@@ -273,9 +243,7 @@ class Camera:
     def validate_frame(frame):
         return frame is not None and str(frame) != 'None'
 
-    """
-        Methods below are used to get and convert frames
-    """
+    '''Methods below are used to get and convert frames'''
 
     def get_standard_frame(self):
         frame = np.copy(self.__frame_new)

@@ -38,11 +38,11 @@ class Camera:
         # capture config
         # todo: test h264 lib for linux
         if system() == "Windows":
-            self.__fourcc_codec = cv2.VideoWriter_fourcc(*'h264')
+            self.__fourcc_codec = cv2.VideoWriter_fourcc(*"h264")
             self.__capture = cv2.VideoCapture(self.camera_number, cv2.CAP_DSHOW)
             self.__logger.info("using h264 video codec on Windows")
         else:
-            self.__fourcc_codec = cv2.VideoWriter_fourcc(*'mp4v')
+            self.__fourcc_codec = cv2.VideoWriter_fourcc(*"mp4v")
             self.__capture = cv2.VideoCapture(self.camera_number)
             self.__logger.info("using mp4v video codec on Linux")
 
@@ -96,7 +96,7 @@ class Camera:
             :return: None"""
 
         if self.validate_frame(self.__frame_new):
-            cv2.imshow('Capture', self.__frame_new)
+            cv2.imshow("Capture", self.__frame_new)
 
     def get_motion_contours(self):
         """Looks for contours around places in the new frame that are different from the old frame
@@ -147,7 +147,7 @@ class Camera:
 
             self.standard_recording_started = True
             current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
-            recording_file_path = f'../recordings/standard/{current_recording_time}.mkv'
+            recording_file_path = f"../recordings/standard/{current_recording_time}.mkv"
             self.__standard_recording_output = cv2.VideoWriter(recording_file_path, self.__fourcc_codec,
                                                                self.standard_recording_fps, self.frame_dimensions)
 
@@ -171,7 +171,7 @@ class Camera:
 
             self.emergency_recording_started = True
             current_recording_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.localtime(time.time()))
-            self.emergency_file_path = f'../recordings/emergency/{current_recording_time}.mkv'
+            self.emergency_file_path = f"../recordings/emergency/{current_recording_time}.mkv"
             self.__emergency_recording_output = cv2.VideoWriter(self.emergency_file_path, self.__fourcc_codec,
                                                                 self.emergency_recording_fps, self.frame_dimensions)
 
@@ -241,7 +241,7 @@ class Camera:
 
     @staticmethod
     def validate_frame(frame):
-        return frame is not None and str(frame) != 'None'
+        return frame is not None and str(frame) != "None"
 
     '''Methods below are used to get and convert frames'''
 

@@ -10,8 +10,8 @@ def upload_to_cloud(file_path, file_upload_name, gdrive_folder_id):
         gauth = GoogleAuth(settings_file="../config/google_drive/settings.yaml")
         drive = GoogleDrive(gauth)
         upload_file = file_path
-        gfile = drive.CreateFile({'parents': [{'id': gdrive_folder_id}]})
-        gfile['title'] = file_upload_name
+        gfile = drive.CreateFile({"parents": [{"id": gdrive_folder_id}]})
+        gfile["title"] = file_upload_name
         gfile.SetContentFile(upload_file)
         gfile.Upload()
     except:

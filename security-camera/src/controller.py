@@ -5,6 +5,7 @@ import gdrive
 from threading import Thread
 from camera import Camera
 from notifications import NotificationSender
+from stats_data_manager import StatsDataManager
 
 
 class Controller:
@@ -42,6 +43,7 @@ class Controller:
         self.cam = None
         self.surveillance_running = False
         self.notification_sender = NotificationSender()
+        self.stats_data_manager = None
 
     def update_parameters(self):
         if self.cam is not None:
@@ -64,6 +66,9 @@ class Controller:
         standard_recording_loaded_frames = 0
         last_system_notification_time = None
         last_email_notification_time = None
+
+        self.stats_data_manager = StatsDataManager("data/stats.sqlite")
+        self.stats_data_manager.insert_surveillance_log("ON")
 
         while self.cam is None or not self.cam.validate_capture():
             # opening input stream failed - try again
@@ -100,6 +105,8 @@ class Controller:
                     self.__logger.info("motion detected")
                     self.cam.save_emergency_recording_frame(controller=self)
 
+                    self.stats_data_manager.insert_motion_detection_data()
+
                     if self.send_system_notifications and (last_system_notification_time is None or
                                                            time.time() - last_system_notification_time >
                                                            self.min_delay_between_system_notifications):
@@ -114,6 +121,8 @@ class Controller:
                         system_notification_thread.start()
                         self.__logger.info("system notification thread started")
 
+                        self.stats_data_manager.insert_notifications_log("system")
+
                     if self.send_email_notifications and (last_email_notification_time is None or
                                                           time.time() - last_email_notification_time >
                                                           self.min_delay_between_email_notifications):
@@ -127,6 +136,8 @@ class Controller:
 
                         email_notification_thread.start()
                         self.__logger.info("email notification thread started")
+
+                        self.stats_data_manager.insert_notifications_log("email")
 
             # check if emergency recording should end
             elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
@@ -149,8 +160,11 @@ class Controller:
                 emergency_recording_loaded_frames += 1
 
             # delay
-            if cv2.waitKey(self.refresh_time) == ord('q'):
+            if cv2.waitKey(self.refresh_time) == ord("q"):
                 self.cam.destroy()
                 self.surveillance_running = False
 
         self.cam = None
+        self.stats_data_manager.insert_surveillance_log("OFF")
+        self.stats_data_manager.close_connection()
+        self.stats_data_manager = None

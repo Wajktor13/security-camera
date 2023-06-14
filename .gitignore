@@ -5,3 +5,4 @@ security-camera/src/__pycache__
 security-camera/src/tmp/tmp.ico
 security-camera/src/tmp/tmp.jpg
 security-camera/logs/*.log
+/security-camera/src/data/stats.sqlite

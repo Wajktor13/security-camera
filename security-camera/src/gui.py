@@ -25,7 +25,8 @@ class App(tk.Tk):
                                          camera_number=0, send_system_notifications=True,
                                          min_delay_between_system_notifications=30, send_email_notifications=False,
                                          min_delay_between_email_notifications=240,
-                                         email_recipient="wajktor007@gmail.com", upload_to_gdrive=False)
+                                         email_recipient="wajktor007@gmail.com", upload_to_gdrive=False,
+                                         save_recordings_locally=True)
         self.surveillance_thread = None
         self.title('Camera window')
         self.app_height = int(self.winfo_screenheight()) - 70

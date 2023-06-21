@@ -14,7 +14,7 @@ class Controller:
     def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
                  detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
                  send_system_notifications, min_delay_between_system_notifications, send_email_notifications,
-                 min_delay_between_email_notifications, email_recipient, upload_to_gdrive):
+                 min_delay_between_email_notifications, email_recipient, upload_to_gdrive, save_recordings_locally):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
@@ -34,6 +34,7 @@ class Controller:
         self.min_delay_between_email_notifications = min_delay_between_email_notifications
         self.email_recipient = email_recipient
         self.upload_to_gdrive = upload_to_gdrive
+        self.save_recordings_locally = save_recordings_locally
         self.gdrive_folder_id = "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y"
 
         # other
@@ -89,21 +90,24 @@ class Controller:
 
             '''standard recording'''
             # refresh frame and save it to standard recording
-            if self.surveillance_running:
-                self.cam.write_standard_recording_frame()
-                standard_recording_loaded_frames += 1
+            if self.save_recordings_locally:
+                if self.surveillance_running:
+                    self.cam.write_standard_recording_frame()
+                    standard_recording_loaded_frames += 1
 
-            # check if standard recording should end
-            if standard_recording_loaded_frames >= self.no_standard_recording_frames:
-                self.cam.stop_standard_recording()
-                standard_recording_loaded_frames = 0
+                # check if standard recording should end
+                if standard_recording_loaded_frames >= self.no_standard_recording_frames:
+                    self.cam.stop_standard_recording()
+                    standard_recording_loaded_frames = 0
 
             '''emergency recording'''
             # check if emergency recording should start
             if not self.cam.emergency_recording_started:
                 if self.cam.search_for_motion() and self.surveillance_running:
                     self.__logger.info("motion detected")
-                    self.cam.save_emergency_recording_frame(controller=self)
+
+                    if self.save_recordings_locally:
+                        self.cam.save_emergency_recording_frame(controller=self)
 
                     self.stats_data_manager.insert_motion_detection_data()
 
@@ -140,7 +144,8 @@ class Controller:
                         self.stats_data_manager.insert_notifications_log("email")
 
             # check if emergency recording should end
-            elif emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
+            elif self.save_recordings_locally and \
+                    emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
                 file_path = self.cam.stop_emergency_recording()
                 emergency_recording_loaded_frames = 0
 
@@ -152,10 +157,10 @@ class Controller:
                                                       self.gdrive_folder_id])
 
                     gdrive_upload_thread.start()
-                    self.__logger.info("system notification thread started")
+                    self.__logger.info("gdrive thread started")
 
             # save frame to emergency recording
-            else:
+            elif self.save_recordings_locally:
                 self.cam.save_emergency_recording_frame(controller=self)
                 emergency_recording_loaded_frames += 1
 
@@ -165,6 +170,9 @@ class Controller:
                 self.surveillance_running = False
 
         self.cam = None
-        self.stats_data_manager.insert_surveillance_log("OFF")
-        self.stats_data_manager.close_connection()
+
+        if self.stats_data_manager is not None:
+            self.stats_data_manager.insert_surveillance_log("OFF")
+            self.stats_data_manager.close_connection()
+
         self.stats_data_manager = None

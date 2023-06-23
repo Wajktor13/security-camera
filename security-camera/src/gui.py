@@ -10,6 +10,7 @@ from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
+from tktimepicker import timepicker
 
 
 class App(tk.Tk):
@@ -77,23 +78,29 @@ class App(tk.Tk):
 
         ## okno aplikacji
         canvas_frame = tk.Frame(self)
-        canvas_frame.grid(row=0, column=2, rowspan=7)
+        canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.app_width, height=self.app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        
         self.start_time_label = tk.Label(self, text="Start hour (HH:MM):")
         self.start_time_label.grid(row=2, column=0, padx=5, pady=5)
 
-        self.start_time_entry = tk.Entry(self)
-        self.start_time_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.start_hour_picker = ttk.Combobox(self, values=self.get_hour_range())
+        self.start_hour_picker.grid(row=2, column=1, padx=5, pady=5)
+
+        self.start_minute_picker = ttk.Combobox(self, values=self.get_minute_range())
+        self.start_minute_picker.grid(row=2, column=2, padx=5, pady=5)
 
         self.end_time_label = tk.Label(self, text="End hour (HH:MM):")
         self.end_time_label.grid(row=3, column=0, padx=5, pady=5)
 
-        self.end_time_entry = tk.Entry(self)
-        self.end_time_entry.grid(row=3, column=1, padx=5, pady=5)
-        # self.check_schedule()
+        self.end_hour_picker = ttk.Combobox(self, values=self.get_hour_range())
+        self.end_hour_picker.grid(row=3, column=1, padx=5, pady=5)
+
+        self.end_minute_picker = ttk.Combobox(self, values=self.get_minute_range())
+        self.end_minute_picker.grid(row=3, column=2, padx=5, pady=5)
 
         self.photo = None
 
@@ -266,8 +273,6 @@ class App(tk.Tk):
 
         self.settings_window = None
 
-        # Przycisk zapisu ustawień  # save_button = tk.Button(self.settings_window, text="Save")  # save_button.grid(row=8, column=0, columnspan=2, pady=10)
-
         # self.settings_window.protocol("WM_DELETE_WINDOW", self.close_settings_window)
 
     def open_app_settings_window(self):
@@ -364,7 +369,11 @@ class App(tk.Tk):
         # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
         self.update_window()
 
-    
+    def get_hour_range(self):
+        return [f"{hour:02d}" for hour in range(24)]
+
+    def get_minute_range(self):
+        return [f"{minute:02d}" for minute in range(60)]
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)

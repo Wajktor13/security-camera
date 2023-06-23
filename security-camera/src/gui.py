@@ -38,6 +38,7 @@ class App(tk.Tk):
         ## utworzenie widgetów do zmiany parametrów
 
         self.settings_window = None
+        self.settings_window_utils = None
 
         self.selected_mode = tk.StringVar()
         self.selected_mode.set("Rectangles")  # Ustawienie trybu na początku
@@ -49,27 +50,7 @@ class App(tk.Tk):
         self.mode_menu = tk.OptionMenu(self, self.selected_mode, *self.mode_options)
         self.mode_menu.grid(row=1, column=1, padx=5, pady=5)
 
-        self.email_label = tk.Label(self, text="Notifications mail:")
-        self.email_label.grid(row=2, column=0, padx=5, pady=5)
-
-        self.email_entry = tk.Entry(self)
-
-        self.email_entry.grid(row=2, column=1, padx=5, pady=5)
-        self.email_entry.bind("<Return>", self.update_email)
-
-        self.notification_label = tk.Label(self, text="Do you want to recieve system notifications:")
-        self.notification_label.grid(row=3, column=0, padx=5, pady=5)
-        self.notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
-        self.notification_menu = tk.OptionMenu(self, self.notification_var, "Yes", "No",
-                                               command=self.update_system_notification)
-        self.notification_menu.grid(row=3, column=1, padx=5, pady=5)
-
-        self.notification_label2 = tk.Label(self, text="Do you want to recieve mail notifications:")
-        self.notification_label2.grid(row=4, column=0, padx=5, pady=5)
-        self.notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
-        self.notification_menu2 = tk.OptionMenu(self, self.notification_var2, "Yes", "No",
-                                                command=self.update_email_notification)
-        self.notification_menu2.grid(row=4, column=1, padx=5, pady=5)
+    
 
         ## przyciski
         buttons_frame = tk.Frame(self)
@@ -84,9 +65,13 @@ class App(tk.Tk):
                                          width=30, height=2)
         self.settings_button.grid(row=2, column=0, pady=5, padx=5)
 
+        self.app_settings = tk.Button(buttons_frame, text="Utility settings", command=self.open_app_settings_window,
+                                         width=30, height=2)
+        self.app_settings.grid(row=3, column=0, pady=5, padx=5)
+
         self.go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings",
                                                   command=self.open_recordings_folder, width=30, height=2)
-        self.go_to_recordings_buttons.grid(row=3, column=0, pady=5, padx=5)
+        self.go_to_recordings_buttons.grid(row=4, column=0, pady=5, padx=5)
 
         buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
 
@@ -98,16 +83,16 @@ class App(tk.Tk):
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         self.start_time_label = tk.Label(self, text="Start hour (HH:MM):")
-        self.start_time_label.grid(row=5, column=0, padx=5, pady=5)
+        self.start_time_label.grid(row=2, column=0, padx=5, pady=5)
 
         self.start_time_entry = tk.Entry(self)
-        self.start_time_entry.grid(row=5, column=1, padx=5, pady=5)
+        self.start_time_entry.grid(row=2, column=1, padx=5, pady=5)
 
         self.end_time_label = tk.Label(self, text="End hour (HH:MM):")
-        self.end_time_label.grid(row=6, column=0, padx=5, pady=5)
+        self.end_time_label.grid(row=3, column=0, padx=5, pady=5)
 
         self.end_time_entry = tk.Entry(self)
-        self.end_time_entry.grid(row=6, column=1, padx=5, pady=5)
+        self.end_time_entry.grid(row=3, column=1, padx=5, pady=5)
         # self.check_schedule()
 
         self.photo = None
@@ -285,38 +270,101 @@ class App(tk.Tk):
 
         # self.settings_window.protocol("WM_DELETE_WINDOW", self.close_settings_window)
 
+    def open_app_settings_window(self):
+        if self.settings_window_utils is not None:
+            return
+
+        self.settings_window_utils = tk.Toplevel(self)
+        self.settings_window_utils.title("App settings")
+
+        def update_email(event):
+            email = email_entry.get()
+            if validate_email(email):
+                self.email_recipient = email
+                self.cam_controller.update_parameters()
+                print("Aktualizacja adresu e-mail:", self.email_recipient)
+            else:
+                print("Nieprawidłowy adres e-mail!")
+            print(self.email_recipient)
+
+        def validate_email(email):
+            pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+            return re.match(pattern, email) is not None
+
+        def update_system_notification(value):
+            if value == "Yes":
+                self.send_system_notifications = self.cam_controller.send_system_notifications = True
+
+            elif value == "No":
+                self.send_system_notifications = self.cam_controller.send_system_notifications = False
+            self.cam_controller.update_parameters()
+
+        def update_email_notification(value):
+            if value == "Yes":
+                self.send_email_notifications = self.cam_controller.send_email_notifications = True
+            elif value == "No":
+                self.send_email_notifications = self.cam_controller.send_email_notifications = False
+            self.cam_controller.update_parameters()
+
+        def update_local_saving(value):
+            if value == "Yes":
+                self.save_recordings_locally = self.cam_controller.save_recordings_locally = True
+            elif value == "No":
+                self.save_recordings_locally = self.cam_controller.save_recordings_locally = False
+            self.cam_controller.update_parameters() 
+        
+        def update_gdrive_saving(value):
+            if value == "Yes":
+                self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = True
+            elif value == "No":
+                self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = False
+            self.cam_controller.update_parameters()
+
+        notification_label = tk.Label(self.settings_window_utils, text="Do you want to recieve system notifications:")
+        notification_label.grid(row=1, column=0, padx=5, pady=5)
+        notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
+        notification_menu = tk.OptionMenu(self.settings_window_utils, notification_var, "Yes", "No",
+                                               command=update_system_notification)
+        notification_menu.grid(row=1, column=1, padx=5, pady=5)
+
+        notification_label2 = tk.Label(self.settings_window_utils, text="Do you want to recieve mail notifications:")
+        notification_label2.grid(row=2, column=0, padx=5, pady=5)
+        notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
+        notification_menu2 = tk.OptionMenu(self.settings_window_utils, notification_var2, "Yes", "No",
+                                                command=update_email_notification)
+        notification_menu2.grid(row=2, column=1, padx=5, pady=5)
+
+        email_label = tk.Label(self.settings_window_utils, text="Notifications mail:")
+        email_label.grid(row=0, column=0, padx=5, pady=5)
+
+        email_entry = tk.Entry(self.settings_window_utils)
+
+        email_entry.grid(row=0, column=1, padx=5, pady=5)
+        email_entry.bind("<Return>", update_email)
+
+        local_recordings = tk.Label(self.settings_window_utils, text="Do you want to save recordings locally:")
+        local_recordings.grid(row=3, column=0, padx=5, pady=5)
+        save_locally = tk.StringVar(value="Yes" if self.cam_controller.save_recordings_locally else "No")
+        local_save = tk.OptionMenu(self.settings_window_utils, save_locally, "Yes", "No",
+                                                command=update_local_saving)
+        local_save.grid(row=3, column=1, padx=5, pady=5)
+
+        gdrive_savings = tk.Label(self.settings_window_utils, text="Do you want to save recordings on Google Drive:")
+        gdrive_savings.grid(row=4, column=0, padx=5, pady=5)
+        save_gdrive = tk.StringVar(value="Yes" if self.cam_controller.upload_to_gdrive else "No")
+        gdrive_save = tk.OptionMenu(self.settings_window_utils, save_gdrive, "Yes", "No",
+                                                command=update_gdrive_saving)
+        gdrive_save.grid(row=4, column=1, padx=5, pady=5)
+
+        self.settings_window_utils = None
+
+
+
     def update_mode(self, mode):
         # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
         self.update_window()
 
-    def update_email(self, event):
-        email = self.email_entry.get()
-        if self.validate_email(email):
-            self.email_recipient = email
-            self.cam_controller.update_parameters()
-            print("Aktualizacja adresu e-mail:", self.email_recipient)
-        else:
-            print("Nieprawidłowy adres e-mail!")
-        print(self.email_recipient)
-
-    def validate_email(self, email):
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        return re.match(pattern, email) is not None
-
-    def update_system_notification(self, value):
-        if value == "Yes":
-            self.send_system_notifications = self.cam_controller.send_system_notifications = True
-
-        elif value == "No":
-            self.send_system_notifications = self.cam_controller.send_system_notifications = False
-        self.cam_controller.update_parameters()
-
-    def update_email_notification(self, value):
-        if value == "Yes":
-            self.send_email_notifications = self.cam_controller.send_email_notifications = True
-        elif value == "No":
-            self.send_email_notifications = self.cam_controller.send_email_notifications = False
-        self.cam_controller.update_parameters()
+    
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)

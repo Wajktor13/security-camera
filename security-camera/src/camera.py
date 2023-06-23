@@ -47,8 +47,9 @@ class Camera:
             self.__logger.info("using mp4v video codec on Linux")
 
         self.frame_dimensions = (640, 480)
-        self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_dimensions[0])
-        self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_dimensions[1])
+
+        self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_gui[0])
+        self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_gui[1])
 
         # other
         self.__frame_old = None

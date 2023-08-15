@@ -1,7 +1,6 @@
 import tkinter as tk
 import logging
 import re
-import time
 import datetime
 import subprocess
 import os
@@ -10,7 +9,6 @@ from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
-from tktimepicker import timepicker
 
 
 class App(tk.Tk):
@@ -36,7 +34,7 @@ class App(tk.Tk):
 
         self.geometry("{}x{}+-7+0".format(self.app_width, self.app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        ## utworzenie widgetów do zmiany parametrów
+        # utworzenie widgetów do zmiany parametrów
 
         self.settings_window = None
         self.settings_window_utils = None
@@ -51,9 +49,7 @@ class App(tk.Tk):
         self.mode_menu = tk.OptionMenu(self, self.selected_mode, *self.mode_options)
         self.mode_menu.grid(row=1, column=1, padx=5, pady=5)
 
-    
-
-        ## przyciski
+        # przyciski
         buttons_frame = tk.Frame(self)
         self.start_button = tk.Button(buttons_frame, text="Start", command=self.run_surveillance_thread, width=30,
                                       height=2)
@@ -67,7 +63,7 @@ class App(tk.Tk):
         self.settings_button.grid(row=2, column=0, pady=5, padx=5)
 
         self.app_settings = tk.Button(buttons_frame, text="Utility settings", command=self.open_app_settings_window,
-                                         width=30, height=2)
+                                      width=30, height=2)
         self.app_settings.grid(row=3, column=0, pady=5, padx=5)
 
         self.go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings",
@@ -76,14 +72,13 @@ class App(tk.Tk):
 
         buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
 
-        ## okno aplikacji
+        # okno aplikacji
         canvas_frame = tk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.app_width, height=self.app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        
         self.start_time_label = tk.Label(self, text="Start hour (HH:MM):")
         self.start_time_label.grid(row=2, column=0, padx=5, pady=5)
 
@@ -113,7 +108,7 @@ class App(tk.Tk):
         self.settings_window = tk.Toplevel(self)
         self.settings_window.title("Settings")
 
-        ## funckja do uzyskiwania aktualnej wartości suwaka
+        # funckja do uzyskiwania aktualnej wartości suwaka
         def show_scale_value_emergency(value):
             rounded_value = round(float(value), 0)
             scale_value_emergency_label.configure(text=rounded_value)
@@ -165,7 +160,7 @@ class App(tk.Tk):
             self.cam_controller.update_parameters()
 
         # Tworzenie widgetów suwaków w oknie ustawień
-        ## zmiana częstotliwości odświeżania
+        # zmiana częstotliwości odświeżania
         refresh_time_var = tk.DoubleVar(value=self.cam_controller.fps)
 
         refresh_time_scale = ttk.Scale(self.settings_window, from_=1, to=60, variable=refresh_time_var, length=200,
@@ -176,7 +171,7 @@ class App(tk.Tk):
         scale_value_refresh_label = ttk.Label(self.settings_window, text=refresh_time_var.get())
         scale_value_refresh_label.grid(row=0, column=2, padx=5, pady=5)
 
-        ## zmiana długości nagrywania awaryjnego
+        # zmiana długości nagrywania awaryjnego
         emergency_recording_length_var = tk.DoubleVar(value=self.cam_controller.emergency_recording_length)
         emergency_recording_length_scale = ttk.Scale(self.settings_window, from_=1, to=30,
                                                      variable=emergency_recording_length_var, length=200,
@@ -187,7 +182,7 @@ class App(tk.Tk):
         scale_value_emergency_label = ttk.Label(self.settings_window, text=emergency_recording_length_var.get())
         scale_value_emergency_label.grid(row=1, column=2, padx=5, pady=5)
 
-        ## zmiana długości nagrania standardowego
+        # zmiana długości nagrania standardowego
         standard_recording_length_var = tk.DoubleVar(value=self.cam_controller.standard_recording_length)
 
         standard_recording_length_scale = ttk.Scale(self.settings_window, from_=1, to=250,
@@ -200,7 +195,7 @@ class App(tk.Tk):
         scale_value_standard_label = ttk.Label(self.settings_window, text=standard_recording_length_var.get())
         scale_value_standard_label.grid(row=2, column=2, padx=5, pady=5)
 
-        ## zmiana wielkości bufora do nagrania awaryjnego
+        # zmiana wielkości bufora do nagrania awaryjnego
         emergency_buff_size_var = tk.DoubleVar(value=self.cam_controller.emergency_buff_length)
 
         emergency_buff_size_scale = ttk.Scale(self.settings_window, from_=1, to=60, variable=emergency_buff_size_var,
@@ -212,7 +207,7 @@ class App(tk.Tk):
         scale_value_buffer_label = ttk.Label(self.settings_window, text=emergency_buff_size_var.get())
         scale_value_buffer_label.grid(row=3, column=2, padx=5, pady=5)
 
-        ## zmiana czułości detekcji
+        # zmiana czułości detekcji
         detection_sensitivity_var = tk.DoubleVar(value=self.cam_controller.detection_sensitivity)
 
         detection_sensitivity_scale = ttk.Scale(self.settings_window, from_=1,
@@ -282,7 +277,7 @@ class App(tk.Tk):
         self.settings_window_utils = tk.Toplevel(self)
         self.settings_window_utils.title("App settings")
 
-        def update_email(event):
+        def update_email():
             email = email_entry.get()
             if validate_email(email):
                 self.email_recipient = email
@@ -316,8 +311,8 @@ class App(tk.Tk):
                 self.save_recordings_locally = self.cam_controller.save_recordings_locally = True
             elif value == "No":
                 self.save_recordings_locally = self.cam_controller.save_recordings_locally = False
-            self.cam_controller.update_parameters() 
-        
+            self.cam_controller.update_parameters()
+
         def update_gdrive_saving(value):
             if value == "Yes":
                 self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = True
@@ -329,14 +324,14 @@ class App(tk.Tk):
         notification_label.grid(row=1, column=0, padx=5, pady=5)
         notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
         notification_menu = tk.OptionMenu(self.settings_window_utils, notification_var, "Yes", "No",
-                                               command=update_system_notification)
+                                          command=update_system_notification)
         notification_menu.grid(row=1, column=1, padx=5, pady=5)
 
         notification_label2 = tk.Label(self.settings_window_utils, text="Do you want to recieve mail notifications:")
         notification_label2.grid(row=2, column=0, padx=5, pady=5)
         notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
         notification_menu2 = tk.OptionMenu(self.settings_window_utils, notification_var2, "Yes", "No",
-                                                command=update_email_notification)
+                                           command=update_email_notification)
         notification_menu2.grid(row=2, column=1, padx=5, pady=5)
 
         email_label = tk.Label(self.settings_window_utils, text="Notifications mail:")
@@ -351,28 +346,28 @@ class App(tk.Tk):
         local_recordings.grid(row=3, column=0, padx=5, pady=5)
         save_locally = tk.StringVar(value="Yes" if self.cam_controller.save_recordings_locally else "No")
         local_save = tk.OptionMenu(self.settings_window_utils, save_locally, "Yes", "No",
-                                                command=update_local_saving)
+                                   command=update_local_saving)
         local_save.grid(row=3, column=1, padx=5, pady=5)
 
         gdrive_savings = tk.Label(self.settings_window_utils, text="Do you want to save recordings on Google Drive:")
         gdrive_savings.grid(row=4, column=0, padx=5, pady=5)
         save_gdrive = tk.StringVar(value="Yes" if self.cam_controller.upload_to_gdrive else "No")
         gdrive_save = tk.OptionMenu(self.settings_window_utils, save_gdrive, "Yes", "No",
-                                                command=update_gdrive_saving)
+                                    command=update_gdrive_saving)
         gdrive_save.grid(row=4, column=1, padx=5, pady=5)
 
         self.settings_window_utils = None
 
-
-
-    def update_mode(self, mode):
+    def update_mode(self):
         # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
         self.update_window()
 
-    def get_hour_range(self):
+    @staticmethod
+    def get_hour_range():
         return [f"{hour:02d}" for hour in range(24)]
 
-    def get_minute_range(self):
+    @staticmethod
+    def get_minute_range():
         return [f"{minute:02d}" for minute in range(60)]
 
     def run_surveillance_thread(self):
@@ -393,47 +388,40 @@ class App(tk.Tk):
         self.__logger.info("surveillance thread stopped")
         self.destroy()
 
-    def check_schedule(self):
-        current_time = datetime.datetime.now().time()
-        start_time_str = self.start_time_entry.get()
-        end_time_str = self.end_time_entry.get()
-
-        try:
-            start_time = datetime.datetime.strptime(start_time_str, "%H:%M").time()
-            end_time = datetime.datetime.strptime(end_time_str, "%H:%M").time()
-
-            if start_time <= current_time <= end_time:
-                self.run_surveillance_thread()
-                self.title("Camera window - Active")
-            else:
-                self.kill_surveillance_thread()
-                self.title("Camera window - Inactive")
-
-        except ValueError:
-            self.kill_surveillance_thread()
-            self.title("Camera window - Inactive")
-
-        self.after(60000, self.check_schedule)  # Sprawdzanie co minutę
+    # def check_schedule(self):
+    #     current_time = datetime.datetime.now().time()
+    #     start_time_str = self.start_time_entry.get()
+    #     end_time_str = self.end_time_entry.get()
+    #
+    #     try:
+    #         start_time = datetime.datetime.strptime(start_time_str, "%H:%M").time()
+    #         end_time = datetime.datetime.strptime(end_time_str, "%H:%M").time()
+    #
+    #         if start_time <= current_time <= end_time:
+    #             self.run_surveillance_thread()
+    #             self.title("Camera window - Active")
+    #         else:
+    #             self.kill_surveillance_thread()
+    #             self.title("Camera window - Inactive")
+    #
+    #     except ValueError:
+    #         self.kill_surveillance_thread()
+    #         self.title("Camera window - Inactive")
+    #
+    #     self.after(60000, self.check_schedule)  # Sprawdzanie co minutę
 
     def update_window(self):
         if self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
-            selected_mode = self.selected_mode.get()
+            cam = self.cam_controller.cam
+            modes = {"Rectangles": cam.get_frame_with_rectangles,
+                     "Contours": cam.get_frame_with_contours,
+                     "High contrast": cam.get_high_contrast_frame,
+                     "Mexican hat": cam.get_mexican_hat_effect_frame,
+                     "Sharpened": cam.get_sharpened_frame,
+                     "Gray": cam.get_gray_frame,
+                     "Standard": cam.get_standard_frame}
 
-            match selected_mode:
-                case "Rectangles":
-                    frame = self.cam_controller.cam.get_frame_with_rectangles()
-                case "Contours":
-                    frame = self.cam_controller.cam.get_frame_with_contours()
-                case "High contrast":
-                    frame = self.cam_controller.cam.get_high_contrast_frame()
-                case "Mexican hat":
-                    frame = self.cam_controller.cam.get_mexican_hat_effect_frame()
-                case "Sharpened":
-                    frame = self.cam_controller.cam.get_sharpened_frame()
-                case "Gray":
-                    frame = self.cam_controller.cam.get_gray_frame()
-                case _:
-                    frame = self.cam_controller.cam.get_standard_frame()
+            frame = modes[self.selected_mode.get()]()
 
             if frame is not None:
                 self.photo = ImageTk.PhotoImage(image=Image.fromarray(frame))

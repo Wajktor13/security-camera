@@ -2,7 +2,7 @@ src/__pycache__
 recordings
 security-camera/src/__pycache__
 .idea
-security-camera/src/tmp/tmp.ico
-security-camera/src/tmp/tmp.jpg
+security-camera/tmp/tmp.ico
+security-camera/tmp/tmp.jpg
 security-camera/logs/*.log
-/security-camera/src/data/stats.sqlite
+/security-camera/data/stats.sqlite

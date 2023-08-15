@@ -68,7 +68,7 @@ class Controller:
         last_system_notification_time = None
         last_email_notification_time = None
 
-        self.__stats_data_manager = StatsDataManager("data/stats.sqlite")
+        self.__stats_data_manager = StatsDataManager("../data/stats.sqlite")
         self.__stats_data_manager.insert_surveillance_log("ON")
 
         while self.cam is None or not self.cam.validate_capture():

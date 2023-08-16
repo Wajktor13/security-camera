@@ -371,15 +371,12 @@ class App(tk.Tk):
     def kill_surveillance_thread(self):
         if self.cam_controller.cam is not None:
             self.cam_controller.surveillance_running = False
-            self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
             self.cam_controller.cam.destroy()
+        self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
         self.__logger.info("surveillance thread stopped")
 
     def on_closing(self):
-        if self.cam_controller.cam is not None:
-            self.cam_controller.surveillance_running = False
-            self.cam_controller.cam.destroy()
-        self.__logger.info("surveillance thread stopped")
+        self.kill_surveillance_thread()
         self.destroy()
 
     # def check_schedule(self):

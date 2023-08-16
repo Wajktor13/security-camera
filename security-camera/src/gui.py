@@ -270,15 +270,14 @@ class App(tk.Tk):
         self.settings_window_utils = tk.Toplevel(self)
         self.settings_window_utils.title("App settings")
 
-        def update_email():
+        def update_email(_):
             email = email_entry.get()
             if validate_email(email):
-                self.email_recipient = email
+                self.cam_controller.email_recipient = email
                 self.cam_controller.update_parameters()
-                print("Aktualizacja adresu e-mail:", self.email_recipient)
+                self.__logger.info("updated recipient email to: " + email)
             else:
-                print("Nieprawidłowy adres e-mail!")
-            print(self.email_recipient)
+                self.__logger.warning("recipient email not updated - wrong email: " + email)
 
         def validate_email(email):
             pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
@@ -333,7 +332,7 @@ class App(tk.Tk):
         email_entry = tk.Entry(self.settings_window_utils)
 
         email_entry.grid(row=0, column=1, padx=5, pady=5)
-        email_entry.bind("<Return>", update_email)
+        email_entry.bind("<KeyRelease>", update_email)
 
         local_recordings = tk.Label(self.settings_window_utils, text="Do you want to save recordings locally:")
         local_recordings.grid(row=3, column=0, padx=5, pady=5)

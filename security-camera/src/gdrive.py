@@ -16,5 +16,6 @@ def upload_to_cloud(file_path, file_upload_name, gdrive_folder_id):
         gfile.Upload()
     except:
         logger.exception("failed to upload emergency video to gdrive")
+        return
 
     logger.info("uploaded emergency video to gdrive")

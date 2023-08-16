@@ -6,45 +6,48 @@ from threading import Thread
 from camera import Camera
 from notifications import NotificationSender
 from stats_data_manager import StatsDataManager
+from controller_settings_manager import ControllerSettingsManager
 
 
 class Controller:
     """Class responsible for controlling the camera, surveillance logic"""
 
-    def __init__(self, refresh_time, emergency_recording_length, standard_recording_length, emergency_buff_length,
-                 detection_sensitivity, max_detection_sensitivity, min_motion_rectangle_area, fps, camera_number,
-                 send_system_notifications, min_delay_between_system_notifications, send_email_notifications,
-                 min_delay_between_email_notifications, email_recipient, upload_to_gdrive, save_recordings_locally):
+    def __init__(self):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
         # user's config
-        self.emergency_recording_length = emergency_recording_length
-        self.standard_recording_length = standard_recording_length
-        self.emergency_buff_length = emergency_buff_length
-        self.refresh_time = refresh_time
-        self.detection_sensitivity = detection_sensitivity
-        self.max_detection_sensitivity = max_detection_sensitivity
-        self.min_motion_rectangle_area = min_motion_rectangle_area
-        self.fps = fps
-        self.camera_number = camera_number
-        self.send_system_notifications = send_system_notifications
-        self.min_delay_between_system_notifications = min_delay_between_system_notifications
-        self.send_email_notifications = send_email_notifications
-        self.min_delay_between_email_notifications = min_delay_between_email_notifications
-        self.email_recipient = email_recipient
-        self.upload_to_gdrive = upload_to_gdrive
-        self.save_recordings_locally = save_recordings_locally
-        self.gdrive_folder_id = "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y"
+        self.emergency_recording_length = None
+        self.standard_recording_length = None
+        self.emergency_buff_length = None
+        self.refresh_time = None
+        self.detection_sensitivity = None
+        self.max_detection_sensitivity = None
+        self.min_motion_rectangle_area = None
+        self.fps = None
+        self.camera_number = None
+        self.send_system_notifications = None
+        self.min_delay_between_system_notifications = None
+        self.send_email_notifications = None
+        self.min_delay_between_email_notifications = None
+        self.email_recipient = None
+        self.upload_to_gdrive = None
+        self.save_recordings_locally = None
+        self.gdrive_folder_id = None
 
         # other
-        self.no_emergency_recording_frames = emergency_recording_length * fps
-        self.no_standard_recording_frames = standard_recording_length * fps
-        self.no_emergency_buff_frames = emergency_buff_length * fps
+        self.no_emergency_recording_frames = None
+        self.no_standard_recording_frames = None
+        self.no_emergency_buff_frames = None
         self.cam = None
         self.surveillance_running = False
         self.notification_sender = NotificationSender()
         self.__stats_data_manager = None
+        self.controller_settings_manager = ControllerSettingsManager("../config/controller_settings.json")
+
+        # loading settings from json
+        self.controller_settings_manager.load_settings(self)
+        self.update_parameters()
 
     def update_parameters(self):
         if self.cam is not None:
@@ -55,8 +58,9 @@ class Controller:
             self.cam.standard_recording_fps = self.cam.emergency_recording_fps = self.fps
             self.cam.camera_number = self.camera_number
 
-            self.no_emergency_recording_frames = self.emergency_recording_length * self.fps
-            self.no_standard_recording_frames = self.standard_recording_length * self.fps
+        self.no_emergency_recording_frames = self.emergency_recording_length * self.fps
+        self.no_standard_recording_frames = self.standard_recording_length * self.fps
+        self.no_emergency_buff_frames = self.emergency_buff_length * self.fps
 
     def start_surveillance(self):
         """Opens the camera and starts surveillance.
@@ -133,8 +137,7 @@ class Controller:
                         last_email_notification_time = time.time()
 
                         email_notification_thread = Thread(target=self.notification_sender.send_email_notification,
-                                                           args=[self.email_recipient,
-                                                                 "motion detected!",
+                                                           args=[self.email_recipient, "motion detected!",
                                                                  "check recordings",
                                                                  self.notification_sender.tmp_img_path])
 
@@ -151,10 +154,7 @@ class Controller:
 
                 if self.upload_to_gdrive and file_path is not None:
                     gdrive_upload_thread = Thread(target=gdrive.upload_to_cloud,
-                                                  args=[
-                                                      file_path,
-                                                      (file_path.split("/"))[-1],
-                                                      self.gdrive_folder_id])
+                                                  args=[file_path, (file_path.split("/"))[-1], self.gdrive_folder_id])
 
                     gdrive_upload_thread.start()
                     self.__logger.info("gdrive thread started")

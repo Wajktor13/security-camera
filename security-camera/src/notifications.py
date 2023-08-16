@@ -19,7 +19,6 @@ class NotificationSender:
         
         self.tmp_img_path = "../tmp/tmp"
         self.email_login_data_path = "../config/notification_email_credentials.json"
-        print(os.path.abspath(self.tmp_img_path))
 
     def send_system_notification(self, path_to_photo, title, message):
         self.prepare_photo(path_to_photo)

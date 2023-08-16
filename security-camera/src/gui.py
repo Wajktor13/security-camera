@@ -18,14 +18,7 @@ class App(tk.Tk):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
-        self.cam_controller = Controller(refresh_time=10, emergency_recording_length=10, standard_recording_length=180,
-                                         emergency_buff_length=4, detection_sensitivity=12,
-                                         max_detection_sensitivity=15, min_motion_rectangle_area=100, fps=24,
-                                         camera_number=0, send_system_notifications=True,
-                                         min_delay_between_system_notifications=30, send_email_notifications=False,
-                                         min_delay_between_email_notifications=240,
-                                         email_recipient="wajktor007@gmail.com", upload_to_gdrive=False,
-                                         save_recordings_locally=True)
+        self.cam_controller = Controller()
         self.surveillance_thread = None
         self.title('Camera window')
         self.app_height = int(self.winfo_screenheight()) - 70
@@ -379,13 +372,11 @@ class App(tk.Tk):
         if self.cam_controller.cam is not None:
             self.cam_controller.surveillance_running = False
             self.cam_controller.cam.destroy()
+        self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
         self.__logger.info("surveillance thread stopped")
 
     def on_closing(self):
-        if self.cam_controller.cam is not None:
-            self.cam_controller.surveillance_running = False
-            self.cam_controller.cam.destroy()
-        self.__logger.info("surveillance thread stopped")
+        self.kill_surveillance_thread()
         self.destroy()
 
     # def check_schedule(self):

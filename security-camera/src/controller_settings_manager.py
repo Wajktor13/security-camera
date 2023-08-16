@@ -3,6 +3,8 @@ from json import load, dump
 
 
 class ControllerSettingsManager:
+    """Class responsible for loading and saving user's settings to JSON file"""
+
     def __init__(self, settings_file_path):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
@@ -57,6 +59,3 @@ class ControllerSettingsManager:
 
         with open(self.settings_file_path, 'w') as settings_file:
             dump(settings_data, settings_file)
-
-
-

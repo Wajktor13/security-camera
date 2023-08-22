@@ -34,10 +34,9 @@ class SecurityCameraApp(tk.Tk):
 
         self.settings_window = None
 
+        # Tworzenie menu rozwijanego
         self.selected_mode = tk.StringVar()
         self.selected_mode.set("Rectangles")  # Ustawienie trybu na początku
-
-        # Tworzenie menu rozwijanego
         self.mode_label = tk.Label(self, text="Change camera mode:")
         self.mode_label.grid(row=1, column=0, padx=5, pady=5)
         self.mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
@@ -97,7 +96,7 @@ class SecurityCameraApp(tk.Tk):
             return
 
         self.settings_window = tk.Toplevel(self)
-        self.settings_window.title("Settings")
+        self.settings_window.title("Security Camera Settings")
 
         # def update_email(_):
         #     email = email_entry.get()
@@ -107,126 +106,91 @@ class SecurityCameraApp(tk.Tk):
         #         self.__logger.info("updated recipient email to: " + email)
         #     else:
         #         self.__logger.warning("recipient email not updated - wrong email: " + email)
-
-        def validate_email(email):
-            pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-            return re.match(pattern, email) is not None
-
-        def update_system_notification(value):
-            if value == "Yes":
-                self.send_system_notifications = self.cam_controller.send_system_notifications = True
-
-            elif value == "No":
-                self.send_system_notifications = self.cam_controller.send_system_notifications = False
-            self.cam_controller.update_parameters()
-
-        def update_email_notification(value):
-            if value == "Yes":
-                self.send_email_notifications = self.cam_controller.send_email_notifications = True
-            elif value == "No":
-                self.send_email_notifications = self.cam_controller.send_email_notifications = False
-            self.cam_controller.update_parameters()
-
-        def update_local_saving(value):
-            if value == "Yes":
-                self.save_recordings_locally = self.cam_controller.save_recordings_locally = True
-            elif value == "No":
-                self.save_recordings_locally = self.cam_controller.save_recordings_locally = False
-            self.cam_controller.update_parameters()
-
-        def update_gdrive_saving(value):
-            if value == "Yes":
-                self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = True
-            elif value == "No":
-                self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = False
-            self.cam_controller.update_parameters()
+        #
+        # def validate_email(email):
+        #     pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        #     return re.match(pattern, email) is not None
 
         '''scale settings'''
+        settings_padding = 10
 
         recording_fps_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.fps, min_value=1,
-                         max_value=60, scale_length=200, row=0, column=0, padding=5, label_text="Recording fps:"))
+                         max_value=60, scale_length=200, row=0, column=0, padding=settings_padding,
+                         label_text="Recording fps:"))
 
         emergency_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.emergency_recording_length, min_value=1, max_value=30,
-                         scale_length=200, row=1, column=0, padding=5, label_text="Length of emergency recording:"))
+                         scale_length=200, row=1, column=0, padding=settings_padding,
+                         label_text="Length of emergency recording:"))
 
         standard_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.standard_recording_length, min_value=1, max_value=300,
-                         scale_length=200, row=2, column=0, padding=5, label_text="Length of standard recording:"))
+                         scale_length=200, row=2, column=0, padding=settings_padding,
+                         label_text="Length of standard recording:"))
 
         emergency_buff_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.emergency_buff_length,
-                         min_value=1, max_value=60, scale_length=200, row=3, column=0, padding=5,
+                         min_value=1, max_value=60, scale_length=200, row=3, column=0, padding=settings_padding,
                          label_text="Length of emergency buffer:"))
 
         detection_sensitivity_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.detection_sensitivity,
                          min_value=1, max_value=self.cam_controller.max_detection_sensitivity, scale_length=200, row=4,
-                         column=0, padding=5, label_text="Detection sensitivity:"))
+                         column=0, padding=settings_padding, label_text="Detection sensitivity:"))
 
         min_motion_area_var_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
-                         scale_length=200, row=5, column=0, padding=5, label_text="Minimal motion area:"))
+                         scale_length=200, row=5, column=0, padding=settings_padding,
+                         label_text="Minimal motion area:"))
 
         delay_between_system_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_system_notifications, min_value=5,
-                         max_value=600, scale_length=200, row=6, column=0, padding=5,
+                         max_value=600, scale_length=200, row=6, column=0, padding=settings_padding,
                          label_text="Delay between system notifications:"))
 
         delay_between_email_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_email_notifications,
-                         min_value=5, max_value=600, scale_length=200, row=7, column=0, padding=5,
+                         min_value=5, max_value=600, scale_length=200, row=7, column=0, padding=settings_padding,
                          label_text="Delay between email notifications:"))
 
+        '''yes/no settings'''
+        system_notifications_yesno_setting = (
+            YesNoSetting(settings_window=self.settings_window,
+                         initial_value="Yes" if self.cam_controller.send_system_notifications else "No",
+                         label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
 
-        # # system notifications approval
-        # notification_label = tk.Label(self.settings_window, text="Do you want to recieve system notifications:")
-        # notification_label.grid(row=8, column=0, padx=5, pady=5)
-        # notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
-        # notification_menu = tk.OptionMenu(self.settings_window, notification_var, "Yes", "No",
-        #                                   command=update_system_notification)
-        # notification_menu.grid(row=8, column=1, padx=5, pady=5)
-        #
-        # # email notifications approval
-        # notification_label2 = tk.Label(self.settings_window, text="Do you want to recieve mail notifications:")
-        # notification_label2.grid(row=2, column=0, padx=5, pady=5)
-        # notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
-        # notification_menu2 = tk.OptionMenu(self.settings_window, notification_var2, "Yes", "No",
-        #                                    command=update_email_notification)
-        # notification_menu2.grid(row=2, column=1, padx=5, pady=5)
-        #
-        # # email
-        # email_label = tk.Label(self.settings_window, text="Notifications mail:")
-        # email_label.grid(row=0, column=0, padx=5, pady=5)
-        #
-        # email_entry = tk.Entry(self.settings_window)
-        #
-        # email_entry.grid(row=0, column=1, padx=5, pady=5)
-        # email_entry.bind("<KeyRelease>", update_email)
-        #
-        # # local recordings
-        # local_recordings = tk.Label(self.settings_window, text="Do you want to save recordings locally:")
-        # local_recordings.grid(row=3, column=0, padx=5, pady=5)
-        # save_locally = tk.StringVar(value="Yes" if self.cam_controller.save_recordings_locally else "No")
-        # local_save = tk.OptionMenu(self.settings_window, save_locally, "Yes", "No",
-        #                            command=update_local_saving)
-        # local_save.grid(row=3, column=1, padx=5, pady=5)
-        #
-        # # upload to cloud
-        # gdrive_savings = tk.Label(self.settings_window, text="Do you want to save recordings on Google Drive:")
-        # gdrive_savings.grid(row=4, column=0, padx=5, pady=5)
-        # save_gdrive = tk.StringVar(value="Yes" if self.cam_controller.upload_to_gdrive else "No")
-        # gdrive_save = tk.OptionMenu(self.settings_window, save_gdrive, "Yes", "No",
-        #                             command=update_gdrive_saving)
-        # gdrive_save.grid(row=4, column=1, padx=5, pady=5)
+        email_notifications_yesno_setting = (
+            YesNoSetting(settings_window=self.settings_window,
+                         initial_value="Yes" if self.cam_controller.send_email_notifications else "No",
+                         label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
+
+        local_recordings_yesno_setting = (
+            YesNoSetting(settings_window=self.settings_window,
+                         initial_value="Yes" if self.cam_controller.save_recordings_locally else "No",
+                         label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
+
+        upload_to_gdrive_yesno_setting = (
+            YesNoSetting(settings_window=self.settings_window,
+                         initial_value="Yes" if self.cam_controller.upload_to_gdrive else "No",
+                         label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
+
+        '''email entry'''
+        email_label = tk.Label(self.settings_window, text="Email notifications recipient:")
+        email_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding)
+
+        email_entry = tk.Entry(self.settings_window)
+
+        email_entry.grid(row=8, column=1, padx=settings_padding, pady=settings_padding)
 
         self.settings_window = None
+
+        '''apply settings button'''
 
     def update_mode(self):
         # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
@@ -312,13 +276,13 @@ class ScaleSetting:
                  label_text):
         self.var = tk.DoubleVar(value=initial_value)
 
-        self.label = tk.ttk.Label(settings_window, text=label_text)
+        self.label = tk.ttk.Label(master=settings_window, text=label_text)
 
-        self.scale = tk.ttk.Scale(settings_window, from_=min_value, to=max_value, variable=self.var,
+        self.scale = tk.ttk.Scale(master=settings_window, from_=min_value, to=max_value, variable=self.var,
                                   length=scale_length, orient=tk.HORIZONTAL,
                                   command=lambda value: self.value_label.configure(text=round(float(value), 0)))
 
-        self.value_label = tk.ttk.Label(settings_window, text=self.var.get())
+        self.value_label = tk.ttk.Label(master=settings_window, text=self.var.get())
 
         self.arrange(row, column, padding)
 
@@ -326,3 +290,18 @@ class ScaleSetting:
         self.label.grid(row=row, column=column, padx=padding, pady=padding)
         self.scale.grid(row=row, column=column + 1, padx=padding, pady=padding, sticky="W")
         self.value_label.grid(row=row, column=column + 2, padx=padding, pady=padding)
+
+
+class YesNoSetting:
+    def __init__(self, settings_window, initial_value, label_text, row, column, padding):
+        self.var = tk.StringVar(value=initial_value)
+
+        self.label = tk.ttk.Label(master=settings_window, text=label_text)
+
+        self.menu = tk.OptionMenu(settings_window, self.var, *("Yes", "No"))
+
+        self.arrange(row, column, padding)
+
+    def arrange(self, row, column, padding):
+        self.label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.menu.grid(row=row, column=column + 1, padx=padding, pady=padding)

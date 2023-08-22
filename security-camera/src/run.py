@@ -1,6 +1,6 @@
 import logging
 import time
-from gui import App
+from gui import SecurityCameraApp
 
 
 if __name__ == "__main__":
@@ -10,6 +10,6 @@ if __name__ == "__main__":
     logger = logging.getLogger("security_camera_logger")
     logger.info("security camera started")
 
-    app = App()
+    app = SecurityCameraApp()
     app.mainloop()
     

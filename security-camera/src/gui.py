@@ -1,36 +1,38 @@
 import tkinter as tk
+from tkinter import ttk
 import logging
 import re
-import datetime
 import subprocess
 import os
 import platform
-from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
 
 
-class App(tk.Tk):
+class SecurityCameraApp(tk.Tk):
+
     def __init__(self):
         super().__init__()
 
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
+        # basic app config
+        self.__app_height = int(self.winfo_screenheight()) - 70
+        self.__app_width = int(self.winfo_screenwidth())
+        self.__gui_refresh_time = 1
+        self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.title('Security Camera')
+
+        # cam
         self.cam_controller = Controller()
         self.surveillance_thread = None
-        self.title('Camera window')
-        self.app_height = int(self.winfo_screenheight()) - 70
-        self.app_width = int(self.winfo_screenwidth())
-        self.__gui_refresh_time = 1
 
-        self.geometry("{}x{}+-7+0".format(self.app_width, self.app_height))
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # utworzenie widgetów do zmiany parametrów
 
         self.settings_window = None
-        self.settings_window_utils = None
 
         self.selected_mode = tk.StringVar()
         self.selected_mode.set("Rectangles")  # Ustawienie trybu na początku
@@ -51,13 +53,9 @@ class App(tk.Tk):
         self.start_button.grid(row=0, column=0, pady=5, padx=5)
         self.stop_button.grid(row=1, column=0, pady=5, padx=5)
 
-        self.settings_button = tk.Button(buttons_frame, text="Camera settings", command=self.open_settings_window,
+        self.settings_button = tk.Button(buttons_frame, text="Settings", command=self.open_settings_window,
                                          width=30, height=2)
         self.settings_button.grid(row=2, column=0, pady=5, padx=5)
-
-        self.app_settings = tk.Button(buttons_frame, text="Utility settings", command=self.open_app_settings_window,
-                                      width=30, height=2)
-        self.app_settings.grid(row=3, column=0, pady=5, padx=5)
 
         self.go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings",
                                                   command=self.open_recordings_folder, width=30, height=2)
@@ -69,28 +67,28 @@ class App(tk.Tk):
         canvas_frame = tk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
-        self.canvas = tk.Canvas(canvas_frame, width=self.app_width, height=self.app_height)
+        self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         self.start_time_label = tk.Label(self, text="Start hour (HH:MM):")
         self.start_time_label.grid(row=2, column=0, padx=5, pady=5)
 
-        self.start_hour_picker = ttk.Combobox(self, values=self.get_hour_range())
+        self.start_hour_picker = tk.ttk.Combobox(self, values=self.get_hour_range())
         self.start_hour_picker.grid(row=2, column=1, padx=5, pady=5)
 
-        self.start_minute_picker = ttk.Combobox(self, values=self.get_minute_range())
+        self.start_minute_picker = tk.ttk.Combobox(self, values=self.get_minute_range())
         self.start_minute_picker.grid(row=2, column=2, padx=5, pady=5)
 
         self.end_time_label = tk.Label(self, text="End hour (HH:MM):")
         self.end_time_label.grid(row=3, column=0, padx=5, pady=5)
 
-        self.end_hour_picker = ttk.Combobox(self, values=self.get_hour_range())
+        self.end_hour_picker = tk.ttk.Combobox(self, values=self.get_hour_range())
         self.end_hour_picker.grid(row=3, column=1, padx=5, pady=5)
 
-        self.end_minute_picker = ttk.Combobox(self, values=self.get_minute_range())
+        self.end_minute_picker = tk.ttk.Combobox(self, values=self.get_minute_range())
         self.end_minute_picker.grid(row=3, column=2, padx=5, pady=5)
 
-        self.photo = None
+        self.displayed_frame = None
 
         self.update_window()
 
@@ -101,183 +99,14 @@ class App(tk.Tk):
         self.settings_window = tk.Toplevel(self)
         self.settings_window.title("Settings")
 
-        # funckja do uzyskiwania aktualnej wartości suwaka
-        def show_scale_value_emergency(value):
-            rounded_value = round(float(value), 0)
-            scale_value_emergency_label.configure(text=rounded_value)
-            self.cam_controller.emergency_recording_length = int(emergency_recording_length_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_scale_value_refresh(value):
-            rounded_value = round(float(value), 0)
-            scale_value_refresh_label.configure(text=rounded_value)
-            self.cam_controller.fps = int(refresh_time_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_scale_value_buffer(value):
-            rounded_value = round(float(value), 0)
-            scale_value_buffer_label.configure(text=rounded_value)
-            self.cam_controller.emergency_buff_length = int(emergency_buff_size_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_scale_value_rect(value):
-            rounded_value = round(float(value), 0)
-            scale_value_rect_label.configure(text=rounded_value)
-            self.cam_controller.min_motion_rectangle_area = int(min_motion_rectangle_area_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_scale_value_sens(value):
-            rounded_value = round(float(value), 0)
-            scale_value_sens_label.configure(text=rounded_value)
-            self.cam_controller.detection_sensitivity = int(detection_sensitivity_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_scale_value_standard(value):
-            rounded_value = round(float(value), 0)
-            scale_value_standard_label.configure(text=rounded_value)
-            self.cam_controller.standard_recording_length = int(standard_recording_length_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_min_delay(value):
-            rounded_value = round(float(value), 0)
-            scale_delay_value_label.configure(text=rounded_value)
-            self.cam_controller.min_delay_between_system_notifications = int(
-                min_delay_between_system_notifications_scale.get())
-            self.cam_controller.update_parameters()
-
-        def show_min_delay_mail(value):
-            rounded_value = round(float(value), 0)
-            scale_delay_mail_value_label.configure(text=rounded_value)
-            self.cam_controller.min_delay_between_email_notifications = int(
-                min_delay_between_email_notifications_scale.get())
-            self.cam_controller.update_parameters()
-
-        # Tworzenie widgetów suwaków w oknie ustawień
-        # zmiana częstotliwości odświeżania
-        refresh_time_var = tk.DoubleVar(value=self.cam_controller.fps)
-
-        refresh_time_scale = ttk.Scale(self.settings_window, from_=1, to=60, variable=refresh_time_var, length=200,
-                                       orient=tk.HORIZONTAL, command=show_scale_value_refresh)
-        refresh_time_scale.grid(row=0, column=1, padx=5, pady=5)
-        refresh_time_label = ttk.Label(self.settings_window, text="Refresh rate:")
-        refresh_time_label.grid(row=0, column=0, padx=5, pady=5)
-        scale_value_refresh_label = ttk.Label(self.settings_window, text=refresh_time_var.get())
-        scale_value_refresh_label.grid(row=0, column=2, padx=5, pady=5)
-
-        # zmiana długości nagrywania awaryjnego
-        emergency_recording_length_var = tk.DoubleVar(value=self.cam_controller.emergency_recording_length)
-        emergency_recording_length_scale = ttk.Scale(self.settings_window, from_=1, to=30,
-                                                     variable=emergency_recording_length_var, length=200,
-                                                     orient=tk.HORIZONTAL, command=show_scale_value_emergency)
-        emergency_recording_length_scale.grid(row=1, column=1, padx=5, pady=5)
-        emergency_recording_length_label = ttk.Label(self.settings_window, text="Lenght of emergency recording:")
-        emergency_recording_length_label.grid(row=1, column=0, padx=5, pady=5)
-        scale_value_emergency_label = ttk.Label(self.settings_window, text=emergency_recording_length_var.get())
-        scale_value_emergency_label.grid(row=1, column=2, padx=5, pady=5)
-
-        # zmiana długości nagrania standardowego
-        standard_recording_length_var = tk.DoubleVar(value=self.cam_controller.standard_recording_length)
-
-        standard_recording_length_scale = ttk.Scale(self.settings_window, from_=1, to=250,
-                                                    variable=standard_recording_length_var, length=200,
-                                                    orient=tk.HORIZONTAL, command=show_scale_value_standard)
-        standard_recording_length_scale.grid(row=2, column=1, padx=5, pady=5)
-        standard_recording_length_label = ttk.Label(self.settings_window, text="Lenght of standard recording:")
-        standard_recording_length_label.grid(row=2, column=0, padx=5, pady=5)
-
-        scale_value_standard_label = ttk.Label(self.settings_window, text=standard_recording_length_var.get())
-        scale_value_standard_label.grid(row=2, column=2, padx=5, pady=5)
-
-        # zmiana wielkości bufora do nagrania awaryjnego
-        emergency_buff_size_var = tk.DoubleVar(value=self.cam_controller.emergency_buff_length)
-
-        emergency_buff_size_scale = ttk.Scale(self.settings_window, from_=1, to=60, variable=emergency_buff_size_var,
-                                              length=200, orient=tk.HORIZONTAL, command=show_scale_value_buffer)
-        emergency_buff_size_scale.grid(row=3, column=1, padx=5, pady=5)
-        emergency_buff_size_label = ttk.Label(self.settings_window, text="Size of emergency buffer:")
-        emergency_buff_size_label.grid(row=3, column=0, padx=5, pady=5)
-
-        scale_value_buffer_label = ttk.Label(self.settings_window, text=emergency_buff_size_var.get())
-        scale_value_buffer_label.grid(row=3, column=2, padx=5, pady=5)
-
-        # zmiana czułości detekcji
-        detection_sensitivity_var = tk.DoubleVar(value=self.cam_controller.detection_sensitivity)
-
-        detection_sensitivity_scale = ttk.Scale(self.settings_window, from_=1,
-                                                to=self.cam_controller.max_detection_sensitivity,
-                                                variable=detection_sensitivity_var, length=200, orient=tk.HORIZONTAL,
-                                                command=show_scale_value_sens)
-        detection_sensitivity_scale.grid(row=4, column=1, padx=5, pady=5)
-        detection_sensitivity_label = ttk.Label(self.settings_window, text="Detection sensivity:")
-        detection_sensitivity_label.grid(row=4, column=0, padx=5, pady=5)
-
-        scale_value_sens_label = ttk.Label(self.settings_window, text=detection_sensitivity_var.get())
-        scale_value_sens_label.grid(row=4, column=2, padx=5, pady=5)
-
-        # zmiana minimalnego obszaru ruchu
-        min_motion_rectangle_area_var = tk.DoubleVar(value=self.cam_controller.min_motion_rectangle_area)
-
-        min_motion_rectangle_area_scale = ttk.Scale(self.settings_window, from_=10, to=5000,
-                                                    variable=min_motion_rectangle_area_var, length=200,
-                                                    orient=tk.HORIZONTAL, command=show_scale_value_rect)
-        min_motion_rectangle_area_scale.grid(row=5, column=1, padx=5, pady=5)
-        min_motion_rectangle_area_label = ttk.Label(self.settings_window, text="Minimal movement range:")
-        min_motion_rectangle_area_label.grid(row=5, column=0, padx=5, pady=5, sticky="W")
-
-        scale_value_rect_label = ttk.Label(self.settings_window, text=min_motion_rectangle_area_var.get())
-        scale_value_rect_label.grid(row=5, column=2, padx=5, pady=5)
-
-        # zmiana odstępu między powiadomieniami systemowymi
-        min_delay_between_system_notifications_var = tk.DoubleVar(
-            value=self.cam_controller.min_delay_between_system_notifications)
-
-        min_delay_between_system_notifications_scale = ttk.Scale(self.settings_window, from_=5, to=600,
-                                                                 variable=min_delay_between_system_notifications_var,
-                                                                 length=200, orient=tk.HORIZONTAL,
-                                                                 command=show_min_delay)
-        min_delay_between_system_notifications_scale.grid(row=6, column=1, padx=5, pady=5)
-        min_delay_between_system_notifications_label = ttk.Label(self.settings_window,
-                                                                 text="Delay between system notifications:")
-        min_delay_between_system_notifications_label.grid(row=6, column=0, padx=5, pady=5, sticky="W")
-
-        scale_delay_value_label = ttk.Label(self.settings_window, text=min_delay_between_system_notifications_var.get())
-        scale_delay_value_label.grid(row=6, column=2, padx=5, pady=5)
-
-        min_delay_between_email_notifications_var = tk.DoubleVar(
-            value=self.cam_controller.min_delay_between_email_notifications)
-
-        min_delay_between_email_notifications_scale = ttk.Scale(self.settings_window, from_=90, to=3600,
-                                                                variable=min_delay_between_email_notifications_var,
-                                                                length=200, orient=tk.HORIZONTAL,
-                                                                command=show_min_delay_mail)
-        min_delay_between_email_notifications_scale.grid(row=7, column=1, padx=5, pady=5)
-        min_delay_between_email_notifications_label = ttk.Label(self.settings_window,
-                                                                text="Delay between mail notifications:")
-        min_delay_between_email_notifications_label.grid(row=7, column=0, padx=5, pady=5, sticky="W")
-
-        scale_delay_mail_value_label = ttk.Label(self.settings_window,
-                                                 text=min_delay_between_email_notifications_var.get())
-        scale_delay_mail_value_label.grid(row=7, column=2, padx=5, pady=5)
-
-        self.settings_window = None
-
-        # self.settings_window.protocol("WM_DELETE_WINDOW", self.close_settings_window)
-
-    def open_app_settings_window(self):
-        if self.settings_window_utils is not None:
-            return
-
-        self.settings_window_utils = tk.Toplevel(self)
-        self.settings_window_utils.title("App settings")
-
-        def update_email(_):
-            email = email_entry.get()
-            if validate_email(email):
-                self.cam_controller.email_recipient = email
-                self.cam_controller.update_parameters()
-                self.__logger.info("updated recipient email to: " + email)
-            else:
-                self.__logger.warning("recipient email not updated - wrong email: " + email)
+        # def update_email(_):
+        #     email = email_entry.get()
+        #     if validate_email(email):
+        #         self.cam_controller.email_recipient = email
+        #         self.cam_controller.update_parameters()
+        #         self.__logger.info("updated recipient email to: " + email)
+        #     else:
+        #         self.__logger.warning("recipient email not updated - wrong email: " + email)
 
         def validate_email(email):
             pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
@@ -312,43 +141,92 @@ class App(tk.Tk):
                 self.upload_to_gdrive = self.cam_controller.upload_to_gdrive = False
             self.cam_controller.update_parameters()
 
-        notification_label = tk.Label(self.settings_window_utils, text="Do you want to recieve system notifications:")
-        notification_label.grid(row=1, column=0, padx=5, pady=5)
-        notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
-        notification_menu = tk.OptionMenu(self.settings_window_utils, notification_var, "Yes", "No",
-                                          command=update_system_notification)
-        notification_menu.grid(row=1, column=1, padx=5, pady=5)
+        '''scale settings'''
 
-        notification_label2 = tk.Label(self.settings_window_utils, text="Do you want to recieve mail notifications:")
-        notification_label2.grid(row=2, column=0, padx=5, pady=5)
-        notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
-        notification_menu2 = tk.OptionMenu(self.settings_window_utils, notification_var2, "Yes", "No",
-                                           command=update_email_notification)
-        notification_menu2.grid(row=2, column=1, padx=5, pady=5)
+        recording_fps_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.fps, min_value=1,
+                         max_value=60, scale_length=200, row=0, column=0, padding=5, label_text="Recording fps:"))
 
-        email_label = tk.Label(self.settings_window_utils, text="Notifications mail:")
-        email_label.grid(row=0, column=0, padx=5, pady=5)
+        emergency_recording_length_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window,
+                         initial_value=self.cam_controller.emergency_recording_length, min_value=1, max_value=30,
+                         scale_length=200, row=1, column=0, padding=5, label_text="Length of emergency recording:"))
 
-        email_entry = tk.Entry(self.settings_window_utils)
+        standard_recording_length_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window,
+                         initial_value=self.cam_controller.standard_recording_length, min_value=1, max_value=300,
+                         scale_length=200, row=2, column=0, padding=5, label_text="Length of standard recording:"))
 
-        email_entry.grid(row=0, column=1, padx=5, pady=5)
-        email_entry.bind("<KeyRelease>", update_email)
+        emergency_buff_length_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.emergency_buff_length,
+                         min_value=1, max_value=60, scale_length=200, row=3, column=0, padding=5,
+                         label_text="Length of emergency buffer:"))
 
-        local_recordings = tk.Label(self.settings_window_utils, text="Do you want to save recordings locally:")
-        local_recordings.grid(row=3, column=0, padx=5, pady=5)
-        save_locally = tk.StringVar(value="Yes" if self.cam_controller.save_recordings_locally else "No")
-        local_save = tk.OptionMenu(self.settings_window_utils, save_locally, "Yes", "No",
-                                   command=update_local_saving)
-        local_save.grid(row=3, column=1, padx=5, pady=5)
+        detection_sensitivity_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.detection_sensitivity,
+                         min_value=1, max_value=self.cam_controller.max_detection_sensitivity, scale_length=200, row=4,
+                         column=0, padding=5, label_text="Detection sensitivity:"))
 
-        gdrive_savings = tk.Label(self.settings_window_utils, text="Do you want to save recordings on Google Drive:")
-        gdrive_savings.grid(row=4, column=0, padx=5, pady=5)
-        save_gdrive = tk.StringVar(value="Yes" if self.cam_controller.upload_to_gdrive else "No")
-        gdrive_save = tk.OptionMenu(self.settings_window_utils, save_gdrive, "Yes", "No",
-                                    command=update_gdrive_saving)
-        gdrive_save.grid(row=4, column=1, padx=5, pady=5)
+        min_motion_area_var_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window,
+                         initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
+                         scale_length=200, row=5, column=0, padding=5, label_text="Minimal motion area:"))
 
-        self.settings_window_utils = None
+        delay_between_system_notifications_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window,
+                         initial_value=self.cam_controller.min_delay_between_system_notifications, min_value=5,
+                         max_value=600, scale_length=200, row=6, column=0, padding=5,
+                         label_text="Delay between system notifications:"))
+
+        delay_between_email_notifications_scale_setting = (
+            ScaleSetting(settings_window=self.settings_window,
+                         initial_value=self.cam_controller.min_delay_between_email_notifications,
+                         min_value=5, max_value=600, scale_length=200, row=7, column=0, padding=5,
+                         label_text="Delay between email notifications:"))
+
+
+        # # system notifications approval
+        # notification_label = tk.Label(self.settings_window, text="Do you want to recieve system notifications:")
+        # notification_label.grid(row=8, column=0, padx=5, pady=5)
+        # notification_var = tk.StringVar(value="Yes" if self.cam_controller.send_system_notifications else "No")
+        # notification_menu = tk.OptionMenu(self.settings_window, notification_var, "Yes", "No",
+        #                                   command=update_system_notification)
+        # notification_menu.grid(row=8, column=1, padx=5, pady=5)
+        #
+        # # email notifications approval
+        # notification_label2 = tk.Label(self.settings_window, text="Do you want to recieve mail notifications:")
+        # notification_label2.grid(row=2, column=0, padx=5, pady=5)
+        # notification_var2 = tk.StringVar(value="Yes" if self.cam_controller.send_email_notifications else "No")
+        # notification_menu2 = tk.OptionMenu(self.settings_window, notification_var2, "Yes", "No",
+        #                                    command=update_email_notification)
+        # notification_menu2.grid(row=2, column=1, padx=5, pady=5)
+        #
+        # # email
+        # email_label = tk.Label(self.settings_window, text="Notifications mail:")
+        # email_label.grid(row=0, column=0, padx=5, pady=5)
+        #
+        # email_entry = tk.Entry(self.settings_window)
+        #
+        # email_entry.grid(row=0, column=1, padx=5, pady=5)
+        # email_entry.bind("<KeyRelease>", update_email)
+        #
+        # # local recordings
+        # local_recordings = tk.Label(self.settings_window, text="Do you want to save recordings locally:")
+        # local_recordings.grid(row=3, column=0, padx=5, pady=5)
+        # save_locally = tk.StringVar(value="Yes" if self.cam_controller.save_recordings_locally else "No")
+        # local_save = tk.OptionMenu(self.settings_window, save_locally, "Yes", "No",
+        #                            command=update_local_saving)
+        # local_save.grid(row=3, column=1, padx=5, pady=5)
+        #
+        # # upload to cloud
+        # gdrive_savings = tk.Label(self.settings_window, text="Do you want to save recordings on Google Drive:")
+        # gdrive_savings.grid(row=4, column=0, padx=5, pady=5)
+        # save_gdrive = tk.StringVar(value="Yes" if self.cam_controller.upload_to_gdrive else "No")
+        # gdrive_save = tk.OptionMenu(self.settings_window, save_gdrive, "Yes", "No",
+        #                             command=update_gdrive_saving)
+        # gdrive_save.grid(row=4, column=1, padx=5, pady=5)
+
+        self.settings_window = None
 
     def update_mode(self):
         # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
@@ -414,8 +292,8 @@ class App(tk.Tk):
             frame = modes[self.selected_mode.get()]()
 
             if frame is not None:
-                self.photo = ImageTk.PhotoImage(image=Image.fromarray(frame))
-                self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+                self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))
+                self.canvas.create_image(0, 0, image=self.displayed_frame, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)
 
@@ -427,3 +305,24 @@ class App(tk.Tk):
             subprocess.Popen(["explorer", path])
         else:
             subprocess.Popen(["xdg-open", path])
+
+
+class ScaleSetting:
+    def __init__(self, settings_window, initial_value, min_value, max_value, scale_length, row, column, padding,
+                 label_text):
+        self.var = tk.DoubleVar(value=initial_value)
+
+        self.label = tk.ttk.Label(settings_window, text=label_text)
+
+        self.scale = tk.ttk.Scale(settings_window, from_=min_value, to=max_value, variable=self.var,
+                                  length=scale_length, orient=tk.HORIZONTAL,
+                                  command=lambda value: self.value_label.configure(text=round(float(value), 0)))
+
+        self.value_label = tk.ttk.Label(settings_window, text=self.var.get())
+
+        self.arrange(row, column, padding)
+
+    def arrange(self, row, column, padding):
+        self.label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.scale.grid(row=row, column=column + 1, padx=padding, pady=padding, sticky="W")
+        self.value_label.grid(row=row, column=column + 2, padx=padding, pady=padding)

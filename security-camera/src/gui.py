@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
 import logging
 import re
 import subprocess
 import os
 import platform
+from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
@@ -18,7 +18,12 @@ class SecurityCameraApp(tk.Tk):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
-        # basic app config
+        # cam and surveillance
+        self.cam_controller = Controller()
+        self.surveillance_thread = None
+
+        ''' gui '''
+        # basic
         self.__app_height = int(self.winfo_screenheight()) - 70
         self.__app_width = int(self.winfo_screenwidth())
         self.__gui_refresh_time = 1
@@ -27,49 +32,60 @@ class SecurityCameraApp(tk.Tk):
         self.title('Security Camera')
         self.displayed_frame = None
 
-        # cam
-        self.cam_controller = Controller()
-        self.surveillance_thread = None
-
-        # utworzenie widgetów do zmiany parametrów
-
-        self.settings_window = None
-
-        # Tworzenie menu rozwijanego
-        self.selected_mode = tk.StringVar()
-        self.selected_mode.set("Rectangles")  # Ustawienie trybu na początku
-        self.mode_label = tk.Label(self, text="Change camera mode:")
-        self.mode_label.grid(row=1, column=0, padx=5, pady=5)
-        self.mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
-        self.mode_menu = tk.OptionMenu(self, self.selected_mode, *self.mode_options)
-        self.mode_menu.grid(row=1, column=1, padx=5, pady=5)
-
-        # przyciski
-        buttons_frame = tk.Frame(self)
-        self.start_button = tk.Button(buttons_frame, text="Start", command=self.run_surveillance_thread, width=30,
-                                      height=2)
-        self.stop_button = tk.Button(buttons_frame, text="Stop", command=self.kill_surveillance_thread, width=30,
-                                     height=2)
-        self.start_button.grid(row=0, column=0, pady=5, padx=5)
-        self.stop_button.grid(row=1, column=0, pady=5, padx=5)
-
-        self.settings_button = tk.Button(buttons_frame, text="Settings", command=self.open_settings_window,
-                                         width=30, height=2)
-        self.settings_button.grid(row=2, column=0, pady=5, padx=5)
-
-        self.go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings",
-                                                  command=self.open_recordings_folder, width=30, height=2)
-        self.go_to_recordings_buttons.grid(row=4, column=0, pady=5, padx=5)
-
-        buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
-
+        # canvas
         canvas_frame = tk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        # image mode dropdown
+        self.image_mode_var = self.create_image_mode_dropdown()
+
+        # settings window
+        self.settings_window = None
+
+        # buttons
+        self.create_buttons()
+
+        # cyclic window update
         self.update_window()
+
+    def create_image_mode_dropdown(self):
+        image_mode_var = tk.StringVar()
+        image_mode_var.set("Rectangles")
+        image_mode_label = tk.Label(self, text="Change camera mode:")
+        image_mode_label.grid(row=1, column=0, padx=5, pady=5)
+        image_mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
+        image_mode_menu = tk.OptionMenu(self, image_mode_var, *image_mode_options)
+        image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
+
+        return image_mode_var
+
+    def create_buttons(self):
+        # buttons frame
+        buttons_frame = tk.Frame(self)
+
+        # start button
+        start_button = tk.Button(buttons_frame, text="Start", command=self.run_surveillance_thread, width=30, height=2)
+        start_button.grid(row=0, column=0, pady=5, padx=5)
+
+        # stop button
+        stop_button = tk.Button(buttons_frame, text="Stop", command=self.kill_surveillance_thread, width=30, height=2)
+        stop_button.grid(row=1, column=0, pady=5, padx=5)
+
+        # settings button
+        settings_button = tk.Button(buttons_frame, text="Settings", command=self.open_settings_window, width=30,
+                                    height=2)
+        settings_button.grid(row=2, column=0, pady=5, padx=5)
+
+        # go to recordings button
+        go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings", command=self.open_recordings_folder,
+                                             width=30, height=2)
+        go_to_recordings_buttons.grid(row=4, column=0, pady=5, padx=5)
+
+        # place frame
+        buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
 
     def open_settings_window(self):
         if self.settings_window is not None:
@@ -180,7 +196,8 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.min_motion_rectangle_area = min_motion_area_var_scale_setting.get_value()
             self.cam_controller.min_delay_between_system_notifications = (
                 delay_between_system_notifications_scale_setting.get_value())
-            self.cam_controller.min_delay_between_email_notifications = delay_between_email_notifications_scale_setting.get_value()
+            self.cam_controller.min_delay_between_email_notifications = (
+                delay_between_email_notifications_scale_setting.get_value())
 
             # yes / no settings
             self.cam_controller.send_system_notifications = system_notifications_yesno_setting.get_value()
@@ -228,7 +245,7 @@ class SecurityCameraApp(tk.Tk):
                      "Gray": cam.get_gray_frame,
                      "Standard": cam.get_standard_frame}
 
-            frame = modes[self.selected_mode.get()]()
+            frame = modes[self.image_mode_var.get()]()
 
             if frame is not None:
                 self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))

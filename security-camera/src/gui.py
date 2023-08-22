@@ -25,6 +25,7 @@ class SecurityCameraApp(tk.Tk):
         self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.title('Security Camera')
+        self.displayed_frame = None
 
         # cam
         self.cam_controller = Controller()
@@ -62,32 +63,11 @@ class SecurityCameraApp(tk.Tk):
 
         buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
 
-        # okno aplikacji
         canvas_frame = tk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        self.start_time_label = tk.Label(self, text="Start hour (HH:MM):")
-        self.start_time_label.grid(row=2, column=0, padx=5, pady=5)
-
-        self.start_hour_picker = tk.ttk.Combobox(self, values=self.get_hour_range())
-        self.start_hour_picker.grid(row=2, column=1, padx=5, pady=5)
-
-        self.start_minute_picker = tk.ttk.Combobox(self, values=self.get_minute_range())
-        self.start_minute_picker.grid(row=2, column=2, padx=5, pady=5)
-
-        self.end_time_label = tk.Label(self, text="End hour (HH:MM):")
-        self.end_time_label.grid(row=3, column=0, padx=5, pady=5)
-
-        self.end_hour_picker = tk.ttk.Combobox(self, values=self.get_hour_range())
-        self.end_hour_picker.grid(row=3, column=1, padx=5, pady=5)
-
-        self.end_minute_picker = tk.ttk.Combobox(self, values=self.get_minute_range())
-        self.end_minute_picker.grid(row=3, column=2, padx=5, pady=5)
-
-        self.displayed_frame = None
 
         self.update_window()
 
@@ -221,18 +201,6 @@ class SecurityCameraApp(tk.Tk):
         # disabling settings window
         self.settings_window = None
 
-    def update_mode(self):
-        # Wywołanie zmiany trybu obrazu po wybraniu nowej opcji z menu rozwijanego
-        self.update_window()
-
-    @staticmethod
-    def get_hour_range():
-        return [f"{hour:02d}" for hour in range(24)]
-
-    @staticmethod
-    def get_minute_range():
-        return [f"{minute:02d}" for minute in range(60)]
-
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)
         self.__logger.info("surveillance thread started")
@@ -248,28 +216,6 @@ class SecurityCameraApp(tk.Tk):
     def on_closing(self):
         self.kill_surveillance_thread()
         self.destroy()
-
-    # def check_schedule(self):
-    #     current_time = datetime.datetime.now().time()
-    #     start_time_str = self.start_time_entry.get()
-    #     end_time_str = self.end_time_entry.get()
-    #
-    #     try:
-    #         start_time = datetime.datetime.strptime(start_time_str, "%H:%M").time()
-    #         end_time = datetime.datetime.strptime(end_time_str, "%H:%M").time()
-    #
-    #         if start_time <= current_time <= end_time:
-    #             self.run_surveillance_thread()
-    #             self.title("Camera window - Active")
-    #         else:
-    #             self.kill_surveillance_thread()
-    #             self.title("Camera window - Inactive")
-    #
-    #     except ValueError:
-    #         self.kill_surveillance_thread()
-    #         self.title("Camera window - Inactive")
-    #
-    #     self.after(60000, self.check_schedule)  # Sprawdzanie co minutę
 
     def update_window(self):
         if self.cam_controller.surveillance_running and self.cam_controller.cam is not None:

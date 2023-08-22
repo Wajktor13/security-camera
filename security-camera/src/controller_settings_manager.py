@@ -3,7 +3,9 @@ from json import load, dump
 
 
 class ControllerSettingsManager:
-    """Class responsible for loading and saving user's settings to JSON file"""
+    """
+    Class responsible for loading and saving user's settings to JSON file.
+    """
 
     def __init__(self, settings_file_path):
         # logging

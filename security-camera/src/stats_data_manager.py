@@ -4,7 +4,9 @@ from datetime import datetime
 
 
 class StatsDataManager:
-    """Class responsible for operations on database that stores data used for statistics"""
+    """
+    Class responsible for operations on database that stores data used for statistics.
+    """
 
     def __init__(self, db_path):
         # logging

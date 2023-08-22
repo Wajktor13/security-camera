@@ -11,7 +11,9 @@ from json import load
 
 class NotificationSender:
 
-    """Class responsible for sending system and email notifications"""
+    """
+    Class responsible for sending system and email notifications.
+    """
 
     def __init__(self):
         # logging

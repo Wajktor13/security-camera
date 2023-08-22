@@ -10,7 +10,9 @@ from controller_settings_manager import ControllerSettingsManager
 
 
 class Controller:
-    """Class responsible for controlling the camera, surveillance logic"""
+    """
+    Class responsible for controlling the camera, surveillance logic.
+    """
 
     def __init__(self):
         # logging
@@ -63,8 +65,10 @@ class Controller:
         self.no_emergency_buff_frames = self.emergency_buff_length * self.fps
 
     def start_surveillance(self):
-        """Opens the camera and starts surveillance.
-            :return: None"""
+        """
+        Opens the camera and starts surveillance.
+        :return: None
+        """
 
         self.surveillance_running = True
         emergency_recording_loaded_frames = 0

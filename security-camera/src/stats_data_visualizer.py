@@ -6,16 +6,20 @@ from datetime import datetime
 
 
 class StatsDataVisualizer:
-    """Class responsible for transforming and visualizing statistical data in matplotlib"""
+    """
+    Class responsible for transforming and visualizing statistical data in matplotlib.
+    """
 
     def __init__(self, db_path):
         self.__stats_data_manager = StatsDataManager(db_path)
 
     def transform_motion_detection_data(self, date_from, date_to):
-        """Filters motion detection data and prepares it for plotting.
-            :param date_from starting date in milliseconds
-            :param date_to ending date in milliseconds
-            :return: x, y ready for plotting"""
+        """
+        Filters motion detection data and prepares it for plotting.
+        :param date_from starting date in milliseconds
+        :param date_to ending date in milliseconds
+        :return: x, y ready for plotting
+        """
 
         motion_detection_data = self.__stats_data_manager.fetch_motion_detection_data()
         motion_detection_data = [log[0] for log in motion_detection_data]
@@ -34,10 +38,12 @@ class StatsDataVisualizer:
         return motion_detection_data_between_dates, [1 for _ in range(len(motion_detection_data_between_dates))]
 
     def show_motion_detection_plot(self, date_from, date_to):
-        """Plots motion detection data between provided dates.
-            :param date_from starting date in milliseconds
-            :param date_to ending date in milliseconds
-            :return: None"""
+        """
+        Plots motion detection data between provided dates.
+        :param date_from starting date in milliseconds
+        :param date_to ending date in milliseconds
+        :return: None
+        """
 
         xs, ys = self.transform_motion_detection_data(date_from, date_to)
         fig, ax = pyplot.subplots()
@@ -50,10 +56,12 @@ class StatsDataVisualizer:
         pyplot.show()
 
     def transform_surveillance_data(self, date_from, date_to):
-        """Filters surveillance data and prepares it for plotting.
-            :param date_from starting date in milliseconds
-            :param date_to ending date in milliseconds
-            :return: x, y ready for plotting"""
+        """
+        Filters surveillance data and prepares it for plotting.
+        :param date_from starting date in milliseconds
+        :param date_to ending date in milliseconds
+        :return: x, y ready for plotting
+        """
 
         surveillance_data = self.__stats_data_manager.fetch_surveillance_log()
         surveillance_data.sort(key=lambda log: log[0])
@@ -77,10 +85,12 @@ class StatsDataVisualizer:
             [1 if log[1] == 'ON' else 0 for log in surveillance_data_between_dates]
 
     def show_surveillance_plot(self, date_from, date_to):
-        """Plots surveillance data between provided dates.
-            :param date_from starting date in milliseconds
-            :param date_to ending date in milliseconds
-            :return: None"""
+        """
+        Plots surveillance data between provided dates.
+        :param date_from starting date in milliseconds
+        :param date_to ending date in milliseconds
+        :return: None
+        """
 
         xs, ys = self.transform_surveillance_data(date_from, date_to)
         fig, ax = pyplot.subplots()

@@ -66,7 +66,8 @@ class SecurityCameraApp(tk.Tk):
         image_mode_var.set("Rectangles")
         image_mode_label = ttk.Label(self, text="Camera mode:")
         image_mode_label.grid(row=1, column=0, padx=5, pady=5)
-        image_mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
+        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
+                              "Mexican hat", "Gray", "Sharpened"]
         image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options, style="Custom.TMenubutton")
         image_mode_menu.config(width=15)
         image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
@@ -81,11 +82,11 @@ class SecurityCameraApp(tk.Tk):
         buttons_frame = ttk.Frame(self)
 
         # start button
-        start_button = ttk.Button(buttons_frame, text="Start", style='Accent.TButton',
+        start_button = ttk.Button(buttons_frame, text="Start surveillance", style='Accent.TButton',
                                   command=self.run_surveillance_thread, width=button_width)
         start_button.grid(row=0, column=0, pady=button_padding, padx=button_padding)
         # stop button
-        stop_button = ttk.Button(buttons_frame, text="Stop", style='Accent.TButton',
+        stop_button = ttk.Button(buttons_frame, text="Stop surveillance", style='Accent.TButton',
                                  command=self.kill_surveillance_thread, width=button_width)
         stop_button.grid(row=1, column=0, pady=button_padding, padx=button_padding)
 
@@ -95,7 +96,7 @@ class SecurityCameraApp(tk.Tk):
         settings_button.grid(row=2, column=0, pady=button_padding, padx=button_padding)
 
         # go to recordings button
-        go_to_recordings_buttons = ttk.Button(buttons_frame, text="Open recordings", style='Accent.TButton',
+        go_to_recordings_buttons = ttk.Button(buttons_frame, text="Open recordings directory", style='Accent.TButton',
                                               command=self.open_recordings_folder, width=button_width)
         go_to_recordings_buttons.grid(row=4, column=0, pady=button_padding, padx=button_padding)
 
@@ -266,7 +267,10 @@ class SecurityCameraApp(tk.Tk):
                      "Gray": cam.get_gray_frame,
                      "Standard": cam.get_standard_frame}
 
-            frame = modes[self.image_mode_var.get()]()
+            try:
+                frame = modes[self.image_mode_var.get()]()
+            except KeyError:
+                frame = cam.get_standard_frame()
 
             if frame is not None:
                 self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))

@@ -27,13 +27,23 @@ class SecurityCameraApp(tk.Tk):
         self.__app_height = int(self.winfo_screenheight()) - 70
         self.__app_width = int(self.winfo_screenwidth())
         self.__gui_refresh_time = 1
+        self.displayed_frame = None
         self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.title('Security Camera')
-        self.displayed_frame = None
+        self.option_add("*tearOff", False)
+
+        # theme
+        self.style = ttk.Style()
+        self.tk.call("source", "../tkinter_theme/forest-dark.tcl")
+        self.style.theme_use("forest-dark")
+        self.main_font = "Arial 14"
+        self.option_add("*Font", self.main_font)
+        self.style.configure("TButton", font=self.main_font)
+        self.style.configure("Custom.TMenubutton", font=self.main_font)
 
         # canvas
-        canvas_frame = tk.Frame(self)
+        canvas_frame = ttk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
@@ -54,35 +64,41 @@ class SecurityCameraApp(tk.Tk):
     def create_image_mode_dropdown(self):
         image_mode_var = tk.StringVar()
         image_mode_var.set("Rectangles")
-        image_mode_label = tk.Label(self, text="Change camera mode:")
+        image_mode_label = ttk.Label(self, text="Camera mode:")
         image_mode_label.grid(row=1, column=0, padx=5, pady=5)
-        image_mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = tk.OptionMenu(self, image_mode_var, *image_mode_options)
+        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
+                              "Mexican hat", "Gray", "Sharpened"]
+        image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options, style="Custom.TMenubutton")
+        image_mode_menu.config(width=15)
         image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
 
         return image_mode_var
 
     def create_buttons(self):
+        button_width = 30
+        button_padding = 6
+
         # buttons frame
-        buttons_frame = tk.Frame(self)
+        buttons_frame = ttk.Frame(self)
 
         # start button
-        start_button = tk.Button(buttons_frame, text="Start", command=self.run_surveillance_thread, width=30, height=2)
-        start_button.grid(row=0, column=0, pady=5, padx=5)
-
+        start_button = ttk.Button(buttons_frame, text="Start surveillance", style='Accent.TButton',
+                                  command=self.run_surveillance_thread, width=button_width)
+        start_button.grid(row=0, column=0, pady=button_padding, padx=button_padding)
         # stop button
-        stop_button = tk.Button(buttons_frame, text="Stop", command=self.kill_surveillance_thread, width=30, height=2)
-        stop_button.grid(row=1, column=0, pady=5, padx=5)
+        stop_button = ttk.Button(buttons_frame, text="Stop surveillance", style='Accent.TButton',
+                                 command=self.kill_surveillance_thread, width=button_width)
+        stop_button.grid(row=1, column=0, pady=button_padding, padx=button_padding)
 
         # settings button
-        settings_button = tk.Button(buttons_frame, text="Settings", command=self.open_settings_window, width=30,
-                                    height=2)
-        settings_button.grid(row=2, column=0, pady=5, padx=5)
+        settings_button = ttk.Button(buttons_frame, text="Settings", style='Accent.TButton',
+                                     command=self.open_settings_window, width=button_width)
+        settings_button.grid(row=2, column=0, pady=button_padding, padx=button_padding)
 
         # go to recordings button
-        go_to_recordings_buttons = tk.Button(buttons_frame, text="Open recordings", command=self.open_recordings_folder,
-                                             width=30, height=2)
-        go_to_recordings_buttons.grid(row=4, column=0, pady=5, padx=5)
+        go_to_recordings_buttons = ttk.Button(buttons_frame, text="Open recordings directory", style='Accent.TButton',
+                                              command=self.open_recordings_folder, width=button_width)
+        go_to_recordings_buttons.grid(row=4, column=0, pady=button_padding, padx=button_padding)
 
         # place frame
         buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
@@ -147,31 +163,34 @@ class SecurityCameraApp(tk.Tk):
 
         # yes / no settings
         system_notifications_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.send_system_notifications else "No",
-                         label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.send_system_notifications,
+                               label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
 
         email_notifications_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.send_email_notifications else "No",
-                         label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.send_email_notifications,
+                               label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
 
         local_recordings_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.save_recordings_locally else "No",
-                         label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.save_recordings_locally,
+                               label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
 
         upload_to_gdrive_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.upload_to_gdrive else "No",
-                         label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.upload_to_gdrive,
+                               label_text="Upload recordings to google drive:", row=12, column=0,
+                               padding=settings_padding))
 
         # email entry
-        email_label = tk.Label(self.settings_window, text="Email notifications recipient:")
+        email_entry_var = tk.StringVar(value=self.cam_controller.email_recipient)
+
+        email_label = ttk.Label(self.settings_window, text="Email notifications recipient:")
         email_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding)
 
-        email_entry = tk.Entry(self.settings_window, width=40)
-        email_entry.grid(row=8, column=1, columnspan=2, padx=settings_padding, pady=settings_padding)
+        email_entry = tk.Entry(self.settings_window, width=28, textvariable=email_entry_var, font=self.main_font)
+        email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
 
         # apply settings button
         def update_email(entry):
@@ -211,8 +230,11 @@ class SecurityCameraApp(tk.Tk):
             # updating parameters
             self.cam_controller.update_parameters()
 
-        apply_settings_button = tk.Button(self.settings_window, text="Apply", command=apply_settings,
-                                          width=30, height=1)
+            # saving parameters to JSON
+            self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
+
+        apply_settings_button = ttk.Button(self.settings_window, text="Apply", style='Accent.TButton',
+                                           command=apply_settings, width=30)
         apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=30, sticky="ew")
 
         # disabling settings window
@@ -245,7 +267,10 @@ class SecurityCameraApp(tk.Tk):
                      "Gray": cam.get_gray_frame,
                      "Standard": cam.get_standard_frame}
 
-            frame = modes[self.image_mode_var.get()]()
+            try:
+                frame = modes[self.image_mode_var.get()]()
+            except KeyError:
+                frame = cam.get_standard_frame()
 
             if frame is not None:
                 self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))
@@ -287,13 +312,13 @@ class ScaleSetting:
         return round(float(self.var.get()), 0)
 
 
-class YesNoSetting:
+class CheckbuttonSetting:
     def __init__(self, settings_window, initial_value, label_text, row, column, padding):
-        self.var = tk.StringVar(value=initial_value)
+        self.var = tk.BooleanVar(value=initial_value)
 
         self.label = tk.ttk.Label(master=settings_window, text=label_text)
 
-        self.menu = tk.OptionMenu(settings_window, self.var, *("Yes", "No"))
+        self.menu = ttk.Checkbutton(master=settings_window, variable=self.var)
 
         self.arrange(row, column, padding)
 
@@ -302,4 +327,4 @@ class YesNoSetting:
         self.menu.grid(row=row, column=column + 1, padx=padding, pady=padding)
 
     def get_value(self):
-        return self.var.get() == "Yes"
+        return self.var.get()

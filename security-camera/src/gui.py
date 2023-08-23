@@ -34,8 +34,13 @@ class SecurityCameraApp(tk.Tk):
         self.option_add("*tearOff", False)
 
         # theme
-        self.tk.call('source', '../tkinter_theme/forest-dark.tcl')
-        ttk.Style().theme_use('forest-dark')
+        self.style = ttk.Style()
+        self.tk.call("source", "../tkinter_theme/forest-dark.tcl")
+        self.style.theme_use("forest-dark")
+        self.main_font = "Arial 14"
+        self.option_add("*Font", self.main_font)
+        self.style.configure("TButton", font=self.main_font)
+        self.style.configure("Custom.TMenubutton", font=self.main_font)
 
         # canvas
         canvas_frame = ttk.Frame(self)
@@ -62,7 +67,7 @@ class SecurityCameraApp(tk.Tk):
         image_mode_label = ttk.Label(self, text="Camera mode:")
         image_mode_label.grid(row=1, column=0, padx=5, pady=5)
         image_mode_options = ["Standard", "Rectangles", "Contours", "High contrast", "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options)
+        image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options, style="Custom.TMenubutton")
         image_mode_menu.config(width=15)
         image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
 
@@ -174,17 +179,17 @@ class SecurityCameraApp(tk.Tk):
         upload_to_gdrive_yesno_setting = (
             CheckbuttonSetting(settings_window=self.settings_window,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to google drive:", row=12, column=0, padding=settings_padding))
+                               label_text="Upload recordings to google drive:", row=12, column=0,
+                               padding=settings_padding))
 
         # email entry
-        email_entry_var = tk.StringVar()
-        email_entry_var.set(self.cam_controller.email_recipient)
+        email_entry_var = tk.StringVar(value=self.cam_controller.email_recipient)
 
         email_label = ttk.Label(self.settings_window, text="Email notifications recipient:")
         email_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding)
 
-        email_entry = ttk.Entry(self.settings_window, width=40, textvariable=email_entry_var)
-        email_entry.grid(row=8, column=1, columnspan=2, padx=settings_padding, pady=settings_padding)
+        email_entry = tk.Entry(self.settings_window, width=28, textvariable=email_entry_var, font=self.main_font)
+        email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
 
         # apply settings button
         def update_email(entry):
@@ -227,7 +232,8 @@ class SecurityCameraApp(tk.Tk):
             # saving parameters to JSON
             self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
 
-        apply_settings_button = ttk.Button(self.settings_window, text="Apply", command=apply_settings, width=30)
+        apply_settings_button = ttk.Button(self.settings_window, text="Apply", style='Accent.TButton',
+                                           command=apply_settings, width=30)
         apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=30, sticky="ew")
 
         # disabling settings window

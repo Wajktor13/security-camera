@@ -157,24 +157,24 @@ class SecurityCameraApp(tk.Tk):
 
         # yes / no settings
         system_notifications_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.send_system_notifications else "No",
-                         label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.send_system_notifications,
+                               label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
 
         email_notifications_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.send_email_notifications else "No",
-                         label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.send_email_notifications,
+                               label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
 
         local_recordings_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.save_recordings_locally else "No",
-                         label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.save_recordings_locally,
+                               label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
 
         upload_to_gdrive_yesno_setting = (
-            YesNoSetting(settings_window=self.settings_window,
-                         initial_value="Yes" if self.cam_controller.upload_to_gdrive else "No",
-                         label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
+            CheckbuttonSetting(settings_window=self.settings_window,
+                               initial_value=self.cam_controller.upload_to_gdrive,
+                               label_text="Upload recordings to google drive:", row=12, column=0, padding=settings_padding))
 
         # email entry
         email_entry_var = tk.StringVar()
@@ -302,13 +302,13 @@ class ScaleSetting:
         return round(float(self.var.get()), 0)
 
 
-class YesNoSetting:
+class CheckbuttonSetting:
     def __init__(self, settings_window, initial_value, label_text, row, column, padding):
-        self.var = tk.StringVar(value=initial_value)
+        self.var = tk.BooleanVar(value=initial_value)
 
         self.label = tk.ttk.Label(master=settings_window, text=label_text)
 
-        self.menu = ttk.OptionMenu(settings_window, self.var, *("Yes", "No"))
+        self.menu = ttk.Checkbutton(master=settings_window, variable=self.var)
 
         self.arrange(row, column, padding)
 
@@ -317,4 +317,4 @@ class YesNoSetting:
         self.menu.grid(row=row, column=column + 1, padx=padding, pady=padding)
 
     def get_value(self):
-        return self.var.get() == "Yes"
+        return self.var.get()

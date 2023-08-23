@@ -167,10 +167,13 @@ class SecurityCameraApp(tk.Tk):
                          label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
 
         # email entry
+        email_entry_var = tk.StringVar()
+        email_entry_var.set(self.cam_controller.email_recipient)
+
         email_label = tk.Label(self.settings_window, text="Email notifications recipient:")
         email_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding)
 
-        email_entry = tk.Entry(self.settings_window, width=40)
+        email_entry = tk.Entry(self.settings_window, width=40, textvariable=email_entry_var)
         email_entry.grid(row=8, column=1, columnspan=2, padx=settings_padding, pady=settings_padding)
 
         # apply settings button

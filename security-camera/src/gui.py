@@ -24,7 +24,7 @@ class SecurityCameraApp(tk.Tk):
 
         ''' gui '''
         # basic
-        self.__app_width = 1695
+        self.__app_width = 1700
         self.__app_height = 720
         self.__img_width = 1280
         self.__img_height = 720
@@ -35,10 +35,11 @@ class SecurityCameraApp(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.title('Security Camera')
         self.option_add("*tearOff", False)
+        self.grid_columnconfigure(0, minsize=420)
 
         # theme
         self.__style = ttk.Style()
-        self.__main_font = "Arial 14"
+        self.__main_font = "TkDefaultFont 14"
         self.tk.call("source", "../tkinter_theme/forest-dark.tcl")
         self.__style.theme_use("forest-dark")
         self.option_add("*Font", self.__main_font)
@@ -53,7 +54,9 @@ class SecurityCameraApp(tk.Tk):
         self.__canvas.pack(fill=tk.BOTH, expand=True)
 
         # sidebar
-        self.__image_mode_var = self.create_sidebar()
+        self.__image_mode_var = None
+        self.__toggle_surveillance_button = None
+        self.create_sidebar()
 
         # settings window
         self.__settings_window = None
@@ -68,41 +71,35 @@ class SecurityCameraApp(tk.Tk):
         # buttons frame
         sidebar_frame = ttk.Frame(self)
 
-        # start button
-        start_button = ttk.Button(sidebar_frame, text="Start surveillance", style='Accent.TButton',
-                                  command=self.run_surveillance_thread, width=button_width)
-        start_button.grid(row=0, column=0, columnspan=2, pady=button_padding, padx=button_padding)
-        # stop button
-        stop_button = ttk.Button(sidebar_frame, text="Stop surveillance", style='Accent.TButton',
-                                 command=self.kill_surveillance_thread, width=button_width)
-        stop_button.grid(row=1, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
+        # toggle surveillance button
+        self.__toggle_surveillance_button = ttk.Button(sidebar_frame, text="Start surveillance", style='Accent.TButton',
+                                                       command=self.toggle_surveillance, width=button_width)
+        self.__toggle_surveillance_button.grid(row=0, column=0, columnspan=2, pady=button_padding, padx=button_padding)
 
         # settings button
         settings_button = ttk.Button(sidebar_frame, text="Settings", style='Accent.TButton',
                                      command=self.open_settings_window, width=button_width)
-        settings_button.grid(row=2, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
+        settings_button.grid(row=2, column=0, columnspan=2, pady=button_padding, padx=button_padding)
 
         # go to recordings button
         go_to_recordings_buttons = ttk.Button(sidebar_frame, text="Open recordings directory", style='Accent.TButton',
                                               command=self.open_recordings_folder, width=button_width)
-        go_to_recordings_buttons.grid(row=4, columnspan=2,  column=0, pady=button_padding, padx=button_padding)
+        go_to_recordings_buttons.grid(row=4, columnspan=2, column=0, pady=button_padding, padx=button_padding)
 
         # dropdown
-        image_mode_var = tk.StringVar()
-        image_mode_var.set("Rectangles")
+        self.__image_mode_var = tk.StringVar()
+        self.__image_mode_var.set("Rectangles")
         image_mode_label = ttk.Label(sidebar_frame, text="Camera mode:")
         image_mode_label.grid(row=5, column=0, padx=5, pady=5)
         image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
                               "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = ttk.OptionMenu(sidebar_frame, image_mode_var, *image_mode_options,
+        image_mode_menu = ttk.OptionMenu(sidebar_frame, self.__image_mode_var, *image_mode_options,
                                          style="Custom.TMenubutton")
         image_mode_menu.config(width=15)
         image_mode_menu.grid(row=5, column=1, padx=5, pady=5)
 
         # place frame
         sidebar_frame.grid(row=0, column=0, pady=(200, 10), padx=10, columnspan=2)
-
-        return image_mode_var
 
     def open_settings_window(self):
         if self.__settings_window is not None:
@@ -134,15 +131,16 @@ class SecurityCameraApp(tk.Tk):
                          label_text="Length of standard recording (s):"))
 
         emergency_buff_length_scale_setting = (
-            ScaleSetting(settings_window=self.__settings_window, initial_value=self.cam_controller.emergency_buff_length,
-                         min_value=1, max_value=60, scale_length=scale_length, row=3, column=0,
-                         padding=settings_padding, label_text="Length of emergency buffer (s):"))
+            ScaleSetting(settings_window=self.__settings_window,
+                         initial_value=self.cam_controller.emergency_buff_length, min_value=1, max_value=60,
+                         scale_length=scale_length, row=3, column=0, padding=settings_padding,
+                         label_text="Length of emergency buffer (s):"))
 
         detection_sensitivity_scale_setting = (
-            ScaleSetting(settings_window=self.__settings_window, initial_value=self.cam_controller.detection_sensitivity,
-                         min_value=1, max_value=self.cam_controller.max_detection_sensitivity,
-                         scale_length=scale_length, row=4, column=0, padding=settings_padding,
-                         label_text="Detection sensitivity (unitless):"))
+            ScaleSetting(settings_window=self.__settings_window,
+                         initial_value=self.cam_controller.detection_sensitivity, min_value=1,
+                         max_value=self.cam_controller.max_detection_sensitivity, scale_length=scale_length, row=4,
+                         column=0, padding=settings_padding, label_text="Detection sensitivity (unitless):"))
 
         min_motion_area_var_scale_setting = (
             ScaleSetting(settings_window=self.__settings_window,
@@ -248,6 +246,14 @@ class SecurityCameraApp(tk.Tk):
 
         # disabling settings window
         self.__settings_window = None
+
+    def toggle_surveillance(self):
+        if not self.cam_controller.surveillance_running:
+            self.run_surveillance_thread()
+            self.__toggle_surveillance_button.config(text="Stop surveillance")
+        else:
+            self.kill_surveillance_thread()
+            self.__toggle_surveillance_button.config(text="Start surveillance")
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)

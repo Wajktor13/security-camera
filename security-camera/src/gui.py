@@ -24,10 +24,13 @@ class SecurityCameraApp(tk.Tk):
 
         ''' gui '''
         # basic
-        self.__app_height = int(self.winfo_screenheight()) - 70
-        self.__app_width = int(self.winfo_screenwidth())
-        self.__gui_refresh_time = 1
-        self.displayed_frame = None
+        self.__app_width = 1695
+        self.__app_height = 720
+        self.__img_width = 1280
+        self.__img_height = 720
+        self.__gui_refresh_time = 10
+        self.displayed_img = None
+        self.resizable(False, False)
         self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.title('Security Camera')
@@ -41,11 +44,9 @@ class SecurityCameraApp(tk.Tk):
         self.option_add("*Font", self.main_font)
         self.style.configure("TButton", font=self.main_font)
         self.style.configure("Custom.TMenubutton", font=self.main_font)
-        self.grid_rowconfigure(1, weight=1)  # Make row 1 resizable
-        self.grid_columnconfigure(3, weight=1)  # Make column 3 resizable
 
         # canvas
-        canvas_frame = ttk.Frame(self, width=100, height=100)
+        canvas_frame = ttk.Frame(self)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
@@ -99,7 +100,7 @@ class SecurityCameraApp(tk.Tk):
         image_mode_menu.grid(row=5, column=1, padx=5, pady=5)
 
         # place frame
-        sidebar_frame.grid(row=0, column=0, pady=(100, 10), padx=10, columnspan=2)
+        sidebar_frame.grid(row=0, column=0, pady=(200, 10), padx=10, columnspan=2)
 
         return image_mode_var
 
@@ -108,7 +109,6 @@ class SecurityCameraApp(tk.Tk):
             return
 
         self.settings_window = tk.Toplevel(self)
-        self.settings_window.geometry("%dx%d%+d%+d" % (820, 720, 250, 125))
         self.settings_window.title("Security Camera Settings")
         self.settings_window.resizable(False, False)
 
@@ -194,8 +194,9 @@ class SecurityCameraApp(tk.Tk):
         email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
 
         # settings applied label
-        settings_applied_label = ttk.Label(self.settings_window, text="✔ settings have been applied")
+        settings_applied_label = ttk.Label(self.settings_window, text="", padding=(5, 5))
         settings_applied_label.configure(foreground="#217346")
+        settings_applied_label.grid(row=14, column=0, columnspan=3, padx=200)
 
         # apply settings button
         def update_email(entry):
@@ -239,7 +240,7 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
 
             # show settings applied label
-            settings_applied_label.grid(row=14, column=0, columnspan=3, padx=200)
+            settings_applied_label.config(text="✔ settings have been applied")
 
         apply_settings_button = ttk.Button(self.settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=30)
@@ -281,8 +282,9 @@ class SecurityCameraApp(tk.Tk):
                 frame = cam.get_standard_frame()
 
             if frame is not None:
-                self.displayed_frame = ImageTk.PhotoImage(Image.fromarray(frame))
-                self.canvas.create_image(0, 0, image=self.displayed_frame, anchor=tk.NW)
+                img = Image.fromarray(frame).resize(size=(self.__img_width, self.__img_height))
+                self.displayed_img = ImageTk.PhotoImage(image=img)
+                self.canvas.create_image(0, 0, image=self.displayed_img, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)
 

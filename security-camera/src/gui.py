@@ -118,48 +118,48 @@ class SecurityCameraApp(tk.Tk):
         recording_fps_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.fps, min_value=1,
                          max_value=60, scale_length=scale_length, row=0, column=0, padding=settings_padding,
-                         label_text="Recording fps:"))
+                         label_text="Recording fps (FPS):"))
 
         emergency_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.emergency_recording_length, min_value=1, max_value=30,
                          scale_length=scale_length, row=1, column=0, padding=settings_padding,
-                         label_text="Length of emergency recording:"))
+                         label_text="Length of emergency recording (s):"))
 
         standard_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.standard_recording_length, min_value=1, max_value=300,
                          scale_length=scale_length, row=2, column=0, padding=settings_padding,
-                         label_text="Length of standard recording:"))
+                         label_text="Length of standard recording (s):"))
 
         emergency_buff_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.emergency_buff_length,
                          min_value=1, max_value=60, scale_length=scale_length, row=3, column=0,
-                         padding=settings_padding, label_text="Length of emergency buffer:"))
+                         padding=settings_padding, label_text="Length of emergency buffer (s):"))
 
         detection_sensitivity_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.detection_sensitivity,
                          min_value=1, max_value=self.cam_controller.max_detection_sensitivity,
                          scale_length=scale_length, row=4, column=0, padding=settings_padding,
-                         label_text="Detection sensitivity:"))
+                         label_text="Detection sensitivity (unitless):"))
 
         min_motion_area_var_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
                          scale_length=scale_length, row=5, column=0, padding=settings_padding,
-                         label_text="Minimal motion area:"))
+                         label_text="Minimal motion area (pixels):"))
 
         delay_between_system_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_system_notifications, min_value=5,
                          max_value=600, scale_length=scale_length, row=6, column=0, padding=settings_padding,
-                         label_text="Delay between system notifications:"))
+                         label_text="Delay between system notifications (s):"))
 
         delay_between_email_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_email_notifications,
                          min_value=5, max_value=600, scale_length=scale_length, row=7, column=0,
-                         padding=settings_padding, label_text="Delay between email notifications:"))
+                         padding=settings_padding, label_text="Delay between email notifications (s):"))
 
         # yes / no settings
         system_notifications_yesno_setting = (

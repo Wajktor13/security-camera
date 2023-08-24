@@ -41,73 +41,74 @@ class SecurityCameraApp(tk.Tk):
         self.option_add("*Font", self.main_font)
         self.style.configure("TButton", font=self.main_font)
         self.style.configure("Custom.TMenubutton", font=self.main_font)
+        self.grid_rowconfigure(1, weight=1)  # Make row 1 resizable
+        self.grid_columnconfigure(3, weight=1)  # Make column 3 resizable
 
         # canvas
-        canvas_frame = ttk.Frame(self)
+        canvas_frame = ttk.Frame(self, width=100, height=100)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        # image mode dropdown
-        self.image_mode_var = self.create_image_mode_dropdown()
+        # sidebar
+        self.image_mode_var = self.create_sidebar()
 
         # settings window
         self.settings_window = None
 
-        # buttons
-        self.create_buttons()
-
         # cyclic window update
         self.update_window()
 
-    def create_image_mode_dropdown(self):
-        image_mode_var = tk.StringVar()
-        image_mode_var.set("Rectangles")
-        image_mode_label = ttk.Label(self, text="Camera mode:")
-        image_mode_label.grid(row=1, column=0, padx=5, pady=5)
-        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
-                              "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options, style="Custom.TMenubutton")
-        image_mode_menu.config(width=15)
-        image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
-
-        return image_mode_var
-
-    def create_buttons(self):
+    def create_sidebar(self):
         button_width = 30
         button_padding = 6
 
         # buttons frame
-        buttons_frame = ttk.Frame(self)
+        sidebar_frame = ttk.Frame(self)
 
         # start button
-        start_button = ttk.Button(buttons_frame, text="Start surveillance", style='Accent.TButton',
+        start_button = ttk.Button(sidebar_frame, text="Start surveillance", style='Accent.TButton',
                                   command=self.run_surveillance_thread, width=button_width)
-        start_button.grid(row=0, column=0, pady=button_padding, padx=button_padding)
+        start_button.grid(row=0, column=0, columnspan=2, pady=button_padding, padx=button_padding)
         # stop button
-        stop_button = ttk.Button(buttons_frame, text="Stop surveillance", style='Accent.TButton',
+        stop_button = ttk.Button(sidebar_frame, text="Stop surveillance", style='Accent.TButton',
                                  command=self.kill_surveillance_thread, width=button_width)
-        stop_button.grid(row=1, column=0, pady=button_padding, padx=button_padding)
+        stop_button.grid(row=1, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
 
         # settings button
-        settings_button = ttk.Button(buttons_frame, text="Settings", style='Accent.TButton',
+        settings_button = ttk.Button(sidebar_frame, text="Settings", style='Accent.TButton',
                                      command=self.open_settings_window, width=button_width)
-        settings_button.grid(row=2, column=0, pady=button_padding, padx=button_padding)
+        settings_button.grid(row=2, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
 
         # go to recordings button
-        go_to_recordings_buttons = ttk.Button(buttons_frame, text="Open recordings directory", style='Accent.TButton',
+        go_to_recordings_buttons = ttk.Button(sidebar_frame, text="Open recordings directory", style='Accent.TButton',
                                               command=self.open_recordings_folder, width=button_width)
-        go_to_recordings_buttons.grid(row=4, column=0, pady=button_padding, padx=button_padding)
+        go_to_recordings_buttons.grid(row=4, columnspan=2,  column=0, pady=button_padding, padx=button_padding)
+
+        # dropdown
+        image_mode_var = tk.StringVar()
+        image_mode_var.set("Rectangles")
+        image_mode_label = ttk.Label(sidebar_frame, text="Camera mode:")
+        image_mode_label.grid(row=5, column=0, padx=5, pady=5)
+        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
+                              "Mexican hat", "Gray", "Sharpened"]
+        image_mode_menu = ttk.OptionMenu(sidebar_frame, image_mode_var, *image_mode_options,
+                                         style="Custom.TMenubutton")
+        image_mode_menu.config(width=15)
+        image_mode_menu.grid(row=5, column=1, padx=5, pady=5)
 
         # place frame
-        buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
+        sidebar_frame.grid(row=0, column=0, pady=(100, 10), padx=10, columnspan=2)
+
+        return image_mode_var
 
     def open_settings_window(self):
         if self.settings_window is not None:
             return
 
         self.settings_window = tk.Toplevel(self)
+        self.settings_window.geometry("%dx%d%+d%+d" % (820, 720, 250, 125))
         self.settings_window.title("Security Camera Settings")
         self.settings_window.resizable(False, False)
 
@@ -118,50 +119,50 @@ class SecurityCameraApp(tk.Tk):
         recording_fps_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.fps, min_value=1,
                          max_value=60, scale_length=scale_length, row=0, column=0, padding=settings_padding,
-                         label_text="Recording fps:"))
+                         label_text="Recording fps (FPS):"))
 
         emergency_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.emergency_recording_length, min_value=1, max_value=30,
                          scale_length=scale_length, row=1, column=0, padding=settings_padding,
-                         label_text="Length of emergency recording:"))
+                         label_text="Length of emergency recording (s):"))
 
         standard_recording_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.standard_recording_length, min_value=1, max_value=300,
                          scale_length=scale_length, row=2, column=0, padding=settings_padding,
-                         label_text="Length of standard recording:"))
+                         label_text="Length of standard recording (s):"))
 
         emergency_buff_length_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.emergency_buff_length,
                          min_value=1, max_value=60, scale_length=scale_length, row=3, column=0,
-                         padding=settings_padding, label_text="Length of emergency buffer:"))
+                         padding=settings_padding, label_text="Length of emergency buffer (s):"))
 
         detection_sensitivity_scale_setting = (
             ScaleSetting(settings_window=self.settings_window, initial_value=self.cam_controller.detection_sensitivity,
                          min_value=1, max_value=self.cam_controller.max_detection_sensitivity,
                          scale_length=scale_length, row=4, column=0, padding=settings_padding,
-                         label_text="Detection sensitivity:"))
+                         label_text="Detection sensitivity (unitless):"))
 
         min_motion_area_var_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
                          scale_length=scale_length, row=5, column=0, padding=settings_padding,
-                         label_text="Minimal motion area:"))
+                         label_text="Minimal motion area (pixels):"))
 
         delay_between_system_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_system_notifications, min_value=5,
                          max_value=600, scale_length=scale_length, row=6, column=0, padding=settings_padding,
-                         label_text="Delay between system notifications:"))
+                         label_text="Delay between system notifications (s):"))
 
         delay_between_email_notifications_scale_setting = (
             ScaleSetting(settings_window=self.settings_window,
                          initial_value=self.cam_controller.min_delay_between_email_notifications,
                          min_value=5, max_value=600, scale_length=scale_length, row=7, column=0,
-                         padding=settings_padding, label_text="Delay between email notifications:"))
+                         padding=settings_padding, label_text="Delay between email notifications (s):"))
 
-        # yes / no settings
+        # checkbutton settings
         system_notifications_yesno_setting = (
             CheckbuttonSetting(settings_window=self.settings_window,
                                initial_value=self.cam_controller.send_system_notifications,
@@ -192,6 +193,10 @@ class SecurityCameraApp(tk.Tk):
         email_entry = tk.Entry(self.settings_window, width=28, textvariable=email_entry_var, font=self.main_font)
         email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
 
+        # settings applied label
+        settings_applied_label = ttk.Label(self.settings_window, text="✔ settings have been applied")
+        settings_applied_label.configure(foreground="#217346")
+
         # apply settings button
         def update_email(entry):
             email = entry.get()
@@ -218,7 +223,7 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.min_delay_between_email_notifications = (
                 delay_between_email_notifications_scale_setting.get_value())
 
-            # yes / no settings
+            # checkbutton settings
             self.cam_controller.send_system_notifications = system_notifications_yesno_setting.get_value()
             self.cam_controller.send_email_notifications = email_notifications_yesno_setting.get_value()
             self.cam_controller.save_recordings_locally = local_recordings_yesno_setting.get_value()
@@ -233,9 +238,12 @@ class SecurityCameraApp(tk.Tk):
             # saving parameters to JSON
             self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
 
+            # show settings applied label
+            settings_applied_label.grid(row=14, column=0, columnspan=3, padx=200)
+
         apply_settings_button = ttk.Button(self.settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=30)
-        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=30, sticky="ew")
+        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.settings_window = None
@@ -273,7 +281,7 @@ class SecurityCameraApp(tk.Tk):
                 frame = cam.get_standard_frame()
 
             if frame is not None:
-                self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))
+                self.displayed_frame = ImageTk.PhotoImage(Image.fromarray(frame))
                 self.canvas.create_image(0, 0, image=self.displayed_frame, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)

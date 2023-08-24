@@ -41,67 +41,67 @@ class SecurityCameraApp(tk.Tk):
         self.option_add("*Font", self.main_font)
         self.style.configure("TButton", font=self.main_font)
         self.style.configure("Custom.TMenubutton", font=self.main_font)
+        self.grid_rowconfigure(1, weight=1)  # Make row 1 resizable
+        self.grid_columnconfigure(3, weight=1)  # Make column 3 resizable
 
         # canvas
-        canvas_frame = ttk.Frame(self)
+        canvas_frame = ttk.Frame(self, width=100, height=100)
         canvas_frame.grid(row=0, column=3, rowspan=7)
 
         self.canvas = tk.Canvas(canvas_frame, width=self.__app_width, height=self.__app_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        # image mode dropdown
-        self.image_mode_var = self.create_image_mode_dropdown()
+        # sidebar
+        self.image_mode_var = self.create_sidebar()
 
         # settings window
         self.settings_window = None
 
-        # buttons
-        self.create_buttons()
-
         # cyclic window update
         self.update_window()
 
-    def create_image_mode_dropdown(self):
-        image_mode_var = tk.StringVar()
-        image_mode_var.set("Rectangles")
-        image_mode_label = ttk.Label(self, text="Camera mode:")
-        image_mode_label.grid(row=1, column=0, padx=5, pady=5)
-        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
-                              "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = ttk.OptionMenu(self, image_mode_var, *image_mode_options, style="Custom.TMenubutton")
-        image_mode_menu.config(width=15)
-        image_mode_menu.grid(row=1, column=1, padx=5, pady=5)
-
-        return image_mode_var
-
-    def create_buttons(self):
+    def create_sidebar(self):
         button_width = 30
         button_padding = 6
 
         # buttons frame
-        buttons_frame = ttk.Frame(self)
+        sidebar_frame = ttk.Frame(self)
 
         # start button
-        start_button = ttk.Button(buttons_frame, text="Start surveillance", style='Accent.TButton',
+        start_button = ttk.Button(sidebar_frame, text="Start surveillance", style='Accent.TButton',
                                   command=self.run_surveillance_thread, width=button_width)
-        start_button.grid(row=0, column=0, pady=button_padding, padx=button_padding)
+        start_button.grid(row=0, column=0, columnspan=2, pady=button_padding, padx=button_padding)
         # stop button
-        stop_button = ttk.Button(buttons_frame, text="Stop surveillance", style='Accent.TButton',
+        stop_button = ttk.Button(sidebar_frame, text="Stop surveillance", style='Accent.TButton',
                                  command=self.kill_surveillance_thread, width=button_width)
-        stop_button.grid(row=1, column=0, pady=button_padding, padx=button_padding)
+        stop_button.grid(row=1, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
 
         # settings button
-        settings_button = ttk.Button(buttons_frame, text="Settings", style='Accent.TButton',
+        settings_button = ttk.Button(sidebar_frame, text="Settings", style='Accent.TButton',
                                      command=self.open_settings_window, width=button_width)
-        settings_button.grid(row=2, column=0, pady=button_padding, padx=button_padding)
+        settings_button.grid(row=2, column=0, columnspan=2,  pady=button_padding, padx=button_padding)
 
         # go to recordings button
-        go_to_recordings_buttons = ttk.Button(buttons_frame, text="Open recordings directory", style='Accent.TButton',
+        go_to_recordings_buttons = ttk.Button(sidebar_frame, text="Open recordings directory", style='Accent.TButton',
                                               command=self.open_recordings_folder, width=button_width)
-        go_to_recordings_buttons.grid(row=4, column=0, pady=button_padding, padx=button_padding)
+        go_to_recordings_buttons.grid(row=4, columnspan=2,  column=0, pady=button_padding, padx=button_padding)
+
+        # dropdown
+        image_mode_var = tk.StringVar()
+        image_mode_var.set("Rectangles")
+        image_mode_label = ttk.Label(sidebar_frame, text="Camera mode:")
+        image_mode_label.grid(row=5, column=0, padx=5, pady=5)
+        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
+                              "Mexican hat", "Gray", "Sharpened"]
+        image_mode_menu = ttk.OptionMenu(sidebar_frame, image_mode_var, *image_mode_options,
+                                         style="Custom.TMenubutton")
+        image_mode_menu.config(width=15)
+        image_mode_menu.grid(row=5, column=1, padx=5, pady=5)
 
         # place frame
-        buttons_frame.grid(row=0, column=0, pady=10, padx=10, columnspan=2)
+        sidebar_frame.grid(row=0, column=0, pady=(100, 10), padx=10, columnspan=2)
+
+        return image_mode_var
 
     def open_settings_window(self):
         if self.settings_window is not None:
@@ -281,7 +281,7 @@ class SecurityCameraApp(tk.Tk):
                 frame = cam.get_standard_frame()
 
             if frame is not None:
-                self.displayed_frame = ImageTk.PhotoImage(image=Image.fromarray(frame))
+                self.displayed_frame = ImageTk.PhotoImage(Image.fromarray(frame))
                 self.canvas.create_image(0, 0, image=self.displayed_frame, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)

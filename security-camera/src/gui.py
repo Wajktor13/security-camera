@@ -242,8 +242,8 @@ class SecurityCameraApp(tk.Tk):
             settings_applied_label.config(text="✔ settings have been applied")
 
         apply_settings_button = ttk.Button(self.__settings_window, text="Apply", style='Accent.TButton',
-                                           command=apply_settings, width=30)
-        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=(30, 5), sticky="ew")
+                                           command=apply_settings, width=5)
+        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=320, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.__settings_window = None

@@ -36,11 +36,12 @@ class SecurityCameraApp(tk.Tk):
         self.title('Security Camera')
         self.option_add("*tearOff", False)
         self.grid_columnconfigure(0, minsize=420)
+        self.iconphoto(False, tk.PhotoImage(file="../assets/eye_icon.png"))
 
         # theme
         self.__style = ttk.Style()
         self.__main_font = "TkDefaultFont 14"
-        self.tk.call("source", "../tkinter_theme/forest-dark.tcl")
+        self.tk.call("source", "../assets/tkinter_theme/forest-dark.tcl")
         self.__style.theme_use("forest-dark")
         self.option_add("*Font", self.__main_font)
         self.__style.configure("TButton", font=self.__main_font)

@@ -108,6 +108,7 @@ class SecurityCameraApp(tk.Tk):
             return
 
         self.settings_window = tk.Toplevel(self)
+        self.settings_window.geometry("%dx%d%+d%+d" % (820, 720, 250, 125))
         self.settings_window.title("Security Camera Settings")
         self.settings_window.resizable(False, False)
 
@@ -161,7 +162,7 @@ class SecurityCameraApp(tk.Tk):
                          min_value=5, max_value=600, scale_length=scale_length, row=7, column=0,
                          padding=settings_padding, label_text="Delay between email notifications (s):"))
 
-        # yes / no settings
+        # checkbutton settings
         system_notifications_yesno_setting = (
             CheckbuttonSetting(settings_window=self.settings_window,
                                initial_value=self.cam_controller.send_system_notifications,
@@ -192,6 +193,10 @@ class SecurityCameraApp(tk.Tk):
         email_entry = tk.Entry(self.settings_window, width=28, textvariable=email_entry_var, font=self.main_font)
         email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
 
+        # settings applied label
+        settings_applied_label = ttk.Label(self.settings_window, text="✔ settings have been applied")
+        settings_applied_label.configure(foreground="#217346")
+
         # apply settings button
         def update_email(entry):
             email = entry.get()
@@ -218,7 +223,7 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.min_delay_between_email_notifications = (
                 delay_between_email_notifications_scale_setting.get_value())
 
-            # yes / no settings
+            # checkbutton settings
             self.cam_controller.send_system_notifications = system_notifications_yesno_setting.get_value()
             self.cam_controller.send_email_notifications = email_notifications_yesno_setting.get_value()
             self.cam_controller.save_recordings_locally = local_recordings_yesno_setting.get_value()
@@ -233,9 +238,12 @@ class SecurityCameraApp(tk.Tk):
             # saving parameters to JSON
             self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
 
+            # show settings applied label
+            settings_applied_label.grid(row=14, column=0, columnspan=3, padx=200)
+
         apply_settings_button = ttk.Button(self.settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=30)
-        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=30, sticky="ew")
+        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=200, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.settings_window = None

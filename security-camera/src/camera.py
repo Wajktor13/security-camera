@@ -359,3 +359,21 @@ class Camera:
             return cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
         # else:
         #     logging.warning("convert_frame_to_rgb() - failed to validate frame")
+
+    @classmethod
+    def get_number_of_camera_devices(cls):
+        no_cameras = 0
+        index = 0
+
+        while True:
+            cap = cv2.VideoCapture(index)
+
+            if not cap.isOpened():
+                break
+
+            cap.release()
+
+            no_cameras += 1
+            index += 1
+
+        return no_cameras

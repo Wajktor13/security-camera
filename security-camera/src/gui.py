@@ -114,7 +114,7 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window.resizable(False, False)
 
         # scale settings
-        settings_padding = 10
+        settings_padding = 12
         scale_length = 450
 
         recording_fps_scale_setting = (
@@ -183,7 +183,7 @@ class SecurityCameraApp(tk.Tk):
         upload_to_gdrive_checkbutton_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to google drive:", row=14, column=0,
+                               label_text="Upload recordings to Google Drive:", row=14, column=0,
                                padding=settings_padding))
 
         # entry settings
@@ -203,7 +203,7 @@ class SecurityCameraApp(tk.Tk):
         camera_number_var = tk.IntVar()
         camera_number_var.set(0)
         camera_number_label = ttk.Label(self.__settings_window, text="Camera number:")
-        camera_number_label.grid(row=8, column=0, padx=5, pady=5)
+        camera_number_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding, sticky="W")
         camera_number_options = [self.cam_controller.camera_number] + [i for i in range(self.__no_cameras)]
         camera_number_menu = ttk.OptionMenu(self.__settings_window, camera_number_var, *camera_number_options,
                                             style="Custom.TMenubutton")
@@ -274,7 +274,7 @@ class SecurityCameraApp(tk.Tk):
 
         apply_settings_button = ttk.Button(self.__settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
-        apply_settings_button.grid(row=15, column=0, columnspan=3, padx=320, pady=(30, 5), sticky="ew")
+        apply_settings_button.grid(row=15, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.__settings_window = None
@@ -364,8 +364,8 @@ class ScaleSetting:
         self.arrange(row, column, padding)
 
     def arrange(self, row, column, padding):
-        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
-        self.__scale.grid(row=row, column=column + 1, padx=padding, pady=padding, sticky="W")
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
+        self.__scale.grid(row=row, column=column + 1, padx=padding, pady=padding)
         self.value_label.grid(row=row, column=column + 2, padx=padding, pady=padding)
 
     def get_value(self):
@@ -383,7 +383,7 @@ class CheckbuttonSetting:
         self.arrange(row, column, padding)
 
     def arrange(self, row, column, padding):
-        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
         self.__menu.grid(row=row, column=column + 1, padx=padding, pady=padding)
 
     def get_value(self):
@@ -401,7 +401,7 @@ class EntrySetting:
         self.arrange(row, column, padding)
 
     def arrange(self, row, column, padding):
-        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
         self.__entry.grid(row=row, column=column + 1, padx=padding, pady=padding)
 
     def get_value(self):

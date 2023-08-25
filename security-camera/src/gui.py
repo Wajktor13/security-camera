@@ -382,3 +382,21 @@ class CheckbuttonSetting:
 
     def get_value(self):
         return self.__var.get()
+
+
+class EntrySetting:
+    def __init__(self, settings_window, initial_value, label_text, row, column, width, padding, font):
+        self.__var = tk.StringVar(value=initial_value)
+
+        self.__label = tk.ttk.Label(master=settings_window, text=label_text)
+
+        self.__entry = tk.Entry(master=settings_window, width=width, textvariable=self.__var, font=font)
+
+        self.arrange(row, column, padding)
+
+    def arrange(self, row, column, padding):
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.__entry.grid(row=row, column=column + 1, padx=padding, pady=padding)
+
+    def get_value(self):
+        return self.__var.get()

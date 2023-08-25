@@ -79,6 +79,7 @@ class Camera:
         :return: True on success, False on fail
         """
 
+        self.__frame_old = self.__frame_new
         try:
             success, self.__frame_new = self.__capture.read()
         except cv2.error:
@@ -87,19 +88,20 @@ class Camera:
 
         if success:
             if not self.emergency_recording_started:
-                '''update emergency buffer'''
-
-                frame_to_save = np.copy(self.__frame_new)
-
-                if self.validate_frame(frame_to_save):
-                    self.__emergency_recording_buffered_frames.append(frame_to_save)
-
-                    if len(self.__emergency_recording_buffered_frames) > self.emergency_buff_size:
-                        self.__emergency_recording_buffered_frames.popleft()
+                self.update_emergency_buffer()
         else:
             self.__logger.warning("failed to refresh frame")
 
         return success
+
+    def update_emergency_buffer(self):
+        frame_to_save = np.copy(self.__frame_new)
+
+        if self.validate_frame(frame_to_save):
+            self.__emergency_recording_buffered_frames.append(frame_to_save)
+
+            if len(self.__emergency_recording_buffered_frames) > self.emergency_buff_size:
+                self.__emergency_recording_buffered_frames.popleft()
 
     def show_window(self):
         """

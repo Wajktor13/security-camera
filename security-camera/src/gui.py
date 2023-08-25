@@ -114,8 +114,8 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window.resizable(False, False)
 
         # scale settings
-        settings_padding = 10
-        scale_length = 280
+        settings_padding = 12
+        scale_length = 450
 
         recording_fps_scale_setting = (
             ScaleSetting(settings_window=self.__settings_window, initial_value=self.cam_controller.fps, min_value=1,
@@ -165,41 +165,45 @@ class SecurityCameraApp(tk.Tk):
                          padding=settings_padding, label_text="Delay between email notifications (s):"))
 
         # checkbutton settings
-        system_notifications_yesno_setting = (
+        system_notifications_checkbutton_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.send_system_notifications,
-                               label_text="Send system notifications:", row=10, column=0, padding=settings_padding))
+                               label_text="Send system notifications:", row=11, column=0, padding=settings_padding))
 
-        email_notifications_yesno_setting = (
+        email_notifications_checkbutton_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.send_email_notifications,
-                               label_text="Send email notifications:", row=11, column=0, padding=settings_padding))
+                               label_text="Send email notifications:", row=12, column=0, padding=settings_padding))
 
-        local_recordings_yesno_setting = (
+        local_recordings_checkbutton_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.save_recordings_locally,
-                               label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
+                               label_text="Save recordings locally:", row=13, column=0, padding=settings_padding))
 
-        upload_to_gdrive_yesno_setting = (
+        upload_to_gdrive_checkbutton_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to google drive:", row=13, column=0,
+                               label_text="Upload recordings to Google Drive:", row=14, column=0,
                                padding=settings_padding))
 
-        # email entry
-        email_entry_var = tk.StringVar(value=self.cam_controller.email_recipient)
+        # entry settings
+        entry_length = 38
 
-        email_label = ttk.Label(self.__settings_window, text="Email notifications recipient:")
-        email_label.grid(row=9, column=0, padx=settings_padding, pady=settings_padding)
+        email_entry_setting = (
+            EntrySetting(settings_window=self.__settings_window, initial_value=self.cam_controller.email_recipient,
+                         label_text="Email notifications recipient:", row=9, column=0, width=entry_length,
+                         padding=settings_padding, font=self.__main_font))
 
-        email_entry = tk.Entry(self.__settings_window, width=28, textvariable=email_entry_var, font=self.__main_font)
-        email_entry.grid(row=9, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
+        gdrive_folder_id_entry_setting = (
+            EntrySetting(settings_window=self.__settings_window, initial_value=self.cam_controller.gdrive_folder_id,
+                         label_text="Google drive folder ID:", row=10, column=0, width=entry_length,
+                         padding=settings_padding, font=self.__main_font))
 
         # camera number dropdown
         camera_number_var = tk.IntVar()
         camera_number_var.set(0)
         camera_number_label = ttk.Label(self.__settings_window, text="Camera number:")
-        camera_number_label.grid(row=8, column=0, padx=5, pady=5)
+        camera_number_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding, sticky="W")
         camera_number_options = [self.cam_controller.camera_number] + [i for i in range(self.__no_cameras)]
         camera_number_menu = ttk.OptionMenu(self.__settings_window, camera_number_var, *camera_number_options,
                                             style="Custom.TMenubutton")
@@ -209,16 +213,15 @@ class SecurityCameraApp(tk.Tk):
         # settings applied label
         settings_applied_label = ttk.Label(self.__settings_window, text="", padding=(5, 5))
         settings_applied_label.configure(foreground="#217346")
-        settings_applied_label.grid(row=15, column=0, columnspan=3, padx=200)
+        settings_applied_label.grid(row=16, column=0, columnspan=3, padx=200)
 
         # apply settings button
-        def update_email(entry):
-            email = entry.get()
-            if validate_email(email):
-                self.cam_controller.email_recipient = email
-                self.__logger.info("updated recipient email to: " + email)
+        def update_email(new_email):
+            if validate_email(new_email):
+                self.cam_controller.email_recipient = new_email
+                self.__logger.info("updated recipient email to: " + new_email)
             else:
-                self.__logger.warning("recipient email not updated - wrong email: " + email)
+                self.__logger.warning("recipient email not updated - wrong email: " + new_email)
 
         def validate_email(email):
             pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -238,13 +241,16 @@ class SecurityCameraApp(tk.Tk):
                 delay_between_email_notifications_scale_setting.get_value())
 
             # checkbutton settings
-            self.cam_controller.send_system_notifications = system_notifications_yesno_setting.get_value()
-            self.cam_controller.send_email_notifications = email_notifications_yesno_setting.get_value()
-            self.cam_controller.save_recordings_locally = local_recordings_yesno_setting.get_value()
-            self.cam_controller.upload_to_gdrive = upload_to_gdrive_yesno_setting.get_value()
+            self.cam_controller.send_system_notifications = system_notifications_checkbutton_setting.get_value()
+            self.cam_controller.send_email_notifications = email_notifications_checkbutton_setting.get_value()
+            self.cam_controller.save_recordings_locally = local_recordings_checkbutton_setting.get_value()
+            self.cam_controller.upload_to_gdrive = upload_to_gdrive_checkbutton_setting.get_value()
 
             # email entry
-            update_email(email_entry)
+            update_email(email_entry_setting.get_value())
+
+            # google drive folder id entry
+            self.cam_controller.gdrive_folder_id = gdrive_folder_id_entry_setting.get_value()
 
             # camera number dropdown
             prev_camera_number = self.cam_controller.camera_number
@@ -268,7 +274,7 @@ class SecurityCameraApp(tk.Tk):
 
         apply_settings_button = ttk.Button(self.__settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
-        apply_settings_button.grid(row=14, column=0, columnspan=3, padx=320, pady=(30, 5), sticky="ew")
+        apply_settings_button.grid(row=15, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.__settings_window = None
@@ -358,8 +364,8 @@ class ScaleSetting:
         self.arrange(row, column, padding)
 
     def arrange(self, row, column, padding):
-        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
-        self.__scale.grid(row=row, column=column + 1, padx=padding, pady=padding, sticky="W")
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
+        self.__scale.grid(row=row, column=column + 1, padx=padding, pady=padding)
         self.value_label.grid(row=row, column=column + 2, padx=padding, pady=padding)
 
     def get_value(self):
@@ -377,8 +383,26 @@ class CheckbuttonSetting:
         self.arrange(row, column, padding)
 
     def arrange(self, row, column, padding):
-        self.__label.grid(row=row, column=column, padx=padding, pady=padding)
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
         self.__menu.grid(row=row, column=column + 1, padx=padding, pady=padding)
+
+    def get_value(self):
+        return self.__var.get()
+
+
+class EntrySetting:
+    def __init__(self, settings_window, initial_value, label_text, row, column, width, padding, font):
+        self.__var = tk.StringVar(value=initial_value)
+
+        self.__label = tk.ttk.Label(master=settings_window, text=label_text)
+
+        self.__entry = tk.Entry(master=settings_window, width=width, textvariable=self.__var, font=font)
+
+        self.arrange(row, column, padding)
+
+    def arrange(self, row, column, padding):
+        self.__label.grid(row=row, column=column, padx=padding, pady=padding, sticky="W")
+        self.__entry.grid(row=row, column=column + 1, padx=padding, pady=padding)
 
     def get_value(self):
         return self.__var.get()

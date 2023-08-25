@@ -79,8 +79,11 @@ class Camera:
         :return: True on success, False on fail
         """
 
-        self.__frame_old = self.__frame_new
-        success, self.__frame_new = self.__capture.read()
+        try:
+            success, self.__frame_new = self.__capture.read()
+        except cv2.error:
+            self.__logger.exception("failed to refresh frame")
+            return False
 
         if success:
             if not self.emergency_recording_started:

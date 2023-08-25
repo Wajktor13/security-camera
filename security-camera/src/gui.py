@@ -8,6 +8,7 @@ from tkinter import ttk
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
+from camera import Camera
 
 
 class SecurityCameraApp(tk.Tk):
@@ -21,6 +22,7 @@ class SecurityCameraApp(tk.Tk):
         # cam and surveillance
         self.cam_controller = Controller()
         self.surveillance_thread = None
+        self.__no_cameras = Camera.get_number_of_camera_devices()
 
         ''' gui '''
         # basic
@@ -30,6 +32,7 @@ class SecurityCameraApp(tk.Tk):
         self.__img_height = 720
         self.__gui_refresh_time = 10
         self.__displayed_img = None
+        self.__antispam_length = 5
         self.resizable(False, False)
         self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -165,37 +168,48 @@ class SecurityCameraApp(tk.Tk):
         system_notifications_yesno_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.send_system_notifications,
-                               label_text="Send system notifications:", row=9, column=0, padding=settings_padding))
+                               label_text="Send system notifications:", row=10, column=0, padding=settings_padding))
 
         email_notifications_yesno_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.send_email_notifications,
-                               label_text="Send email notifications:", row=10, column=0, padding=settings_padding))
+                               label_text="Send email notifications:", row=11, column=0, padding=settings_padding))
 
         local_recordings_yesno_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.save_recordings_locally,
-                               label_text="Save recordings locally:", row=11, column=0, padding=settings_padding))
+                               label_text="Save recordings locally:", row=12, column=0, padding=settings_padding))
 
         upload_to_gdrive_yesno_setting = (
             CheckbuttonSetting(settings_window=self.__settings_window,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to google drive:", row=12, column=0,
+                               label_text="Upload recordings to google drive:", row=13, column=0,
                                padding=settings_padding))
 
         # email entry
         email_entry_var = tk.StringVar(value=self.cam_controller.email_recipient)
 
         email_label = ttk.Label(self.__settings_window, text="Email notifications recipient:")
-        email_label.grid(row=8, column=0, padx=settings_padding, pady=settings_padding)
+        email_label.grid(row=9, column=0, padx=settings_padding, pady=settings_padding)
 
         email_entry = tk.Entry(self.__settings_window, width=28, textvariable=email_entry_var, font=self.__main_font)
-        email_entry.grid(row=8, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
+        email_entry.grid(row=9, column=1, columnspan=1, padx=(0, 10), pady=settings_padding)
+
+        # camera number dropdown
+        camera_number_var = tk.IntVar()
+        camera_number_var.set(0)
+        camera_number_label = ttk.Label(self.__settings_window, text="Camera number:")
+        camera_number_label.grid(row=8, column=0, padx=5, pady=5)
+        camera_number_options = [self.cam_controller.camera_number] + [i for i in range(self.__no_cameras)]
+        camera_number_menu = ttk.OptionMenu(self.__settings_window, camera_number_var, *camera_number_options,
+                                            style="Custom.TMenubutton")
+        camera_number_menu.config(width=2)
+        camera_number_menu.grid(row=8, column=1, padx=5, pady=5)
 
         # settings applied label
         settings_applied_label = ttk.Label(self.__settings_window, text="", padding=(5, 5))
         settings_applied_label.configure(foreground="#217346")
-        settings_applied_label.grid(row=14, column=0, columnspan=3, padx=200)
+        settings_applied_label.grid(row=15, column=0, columnspan=3, padx=200)
 
         # apply settings button
         def update_email(entry):
@@ -232,6 +246,17 @@ class SecurityCameraApp(tk.Tk):
             # email entry
             update_email(email_entry)
 
+            # camera number dropdown
+            prev_camera_number = self.cam_controller.camera_number
+            self.cam_controller.camera_number = camera_number_var.get()
+            self.__logger.info("changed camera")
+            if (prev_camera_number != camera_number_var.get() and
+                    self.cam_controller.surveillance_running):
+                # restarting surveillance in order to change camera
+                self.kill_surveillance_thread()
+                self.run_surveillance_thread()
+                self.__logger.info("restarted surveillance after camera change")
+
             # updating parameters
             self.cam_controller.update_parameters()
 
@@ -243,18 +268,20 @@ class SecurityCameraApp(tk.Tk):
 
         apply_settings_button = ttk.Button(self.__settings_window, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
-        apply_settings_button.grid(row=13, column=0, columnspan=3, padx=320, pady=(30, 5), sticky="ew")
+        apply_settings_button.grid(row=14, column=0, columnspan=3, padx=320, pady=(30, 5), sticky="ew")
 
         # disabling settings window
         self.__settings_window = None
 
     def toggle_surveillance(self):
+        self.__toggle_surveillance_button.state(["disabled"])
+
         if not self.cam_controller.surveillance_running:
             self.run_surveillance_thread()
-            self.__toggle_surveillance_button.config(text="Stop surveillance")
+            self.toggle_surveillance_button_antispam(self.__antispam_length)
         else:
             self.kill_surveillance_thread()
-            self.__toggle_surveillance_button.config(text="Start surveillance")
+            self.toggle_surveillance_button_antispam(self.__antispam_length)
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)
@@ -294,6 +321,16 @@ class SecurityCameraApp(tk.Tk):
                 self.__canvas.create_image(0, 0, image=self.__displayed_img, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)
+
+    def toggle_surveillance_button_antispam(self, iteration):
+        if iteration > 0:
+            new_text = "Stop surveillance" if self.cam_controller.surveillance_running else "Start surveillance"
+            self.__toggle_surveillance_button.config(text=f"{new_text} ({iteration})")
+            self.after(1000, self.toggle_surveillance_button_antispam, iteration - 1)
+        else:
+            current_text = self.__toggle_surveillance_button.cget("text")
+            self.__toggle_surveillance_button.config(text=current_text[:-3])
+            self.__toggle_surveillance_button.state(["!disabled"])
 
     @staticmethod
     def open_recordings_folder():

@@ -99,30 +99,29 @@ class Controller:
             '''standard recording'''
             # refresh frame and save it to standard recording
             if self.save_recordings_locally:
-                if self.surveillance_running and self.cam is not None:
+                if self.surveillance_running:
                     self.cam.write_standard_recording_frame()
                     standard_recording_loaded_frames += 1
 
                 # check if standard recording should end
-                if standard_recording_loaded_frames >= self.no_standard_recording_frames and self.cam is not None:
+                if standard_recording_loaded_frames >= self.no_standard_recording_frames:
                     self.cam.stop_standard_recording()
                     standard_recording_loaded_frames = 0
 
             '''emergency recording'''
             # check if emergency recording should start
-            if self.cam.emergency_recording_started:
-                if self.cam is not None and self.cam.search_for_motion() and self.surveillance_running:
+            if not self.cam.emergency_recording_started:
+                if self.cam.search_for_motion() and self.surveillance_running:
                     self.__logger.info("motion detected")
 
-                    if self.save_recordings_locally and self.cam is not None:
+                    if self.save_recordings_locally:
                         self.cam.save_emergency_recording_frame(controller=self)
 
                     self.__stats_data_manager.insert_motion_detection_data()
 
-                    if self.cam is not None and self.send_system_notifications and \
-                            (last_system_notification_time is None or
-                             time.time() - last_system_notification_time >
-                             self.min_delay_between_system_notifications):
+                    if self.send_system_notifications and (last_system_notification_time is None or
+                                                           time.time() - last_system_notification_time >
+                                                           self.min_delay_between_system_notifications):
                         last_system_notification_time = time.time()
 
                         self.cam.save_frame_to_img(self.notification_sender.tmp_img_path + ".jpg")
@@ -152,7 +151,7 @@ class Controller:
                         self.__stats_data_manager.insert_notifications_log("email")
 
             # check if emergency recording should end
-            elif self.save_recordings_locally and self.cam is not None and\
+            elif self.save_recordings_locally and \
                     emergency_recording_loaded_frames >= self.no_emergency_recording_frames:
                 file_path = self.cam.stop_emergency_recording()
                 emergency_recording_loaded_frames = 0
@@ -165,15 +164,14 @@ class Controller:
                     self.__logger.info("gdrive thread started")
 
             # save frame to emergency recording
-            elif self.save_recordings_locally and self.cam is not None:
+            elif self.save_recordings_locally:
                 self.cam.save_emergency_recording_frame(controller=self)
                 emergency_recording_loaded_frames += 1
 
             # delay
             if cv2.waitKey(self.refresh_time) == ord("q"):
-                if self.cam is not None:
-                    self.cam.destroy()
-                    self.surveillance_running = False
+                self.cam.destroy()
+                self.surveillance_running = False
 
         self.cam = None
 

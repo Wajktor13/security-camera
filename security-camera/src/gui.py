@@ -32,6 +32,7 @@ class SecurityCameraApp(tk.Tk):
         self.__img_height = 720
         self.__gui_refresh_time = 10
         self.__displayed_img = None
+        self.__antispam_length = 5
         self.resizable(False, False)
         self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -273,12 +274,14 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window = None
 
     def toggle_surveillance(self):
+        self.__toggle_surveillance_button.state(["disabled"])
+
         if not self.cam_controller.surveillance_running:
             self.run_surveillance_thread()
-            self.__toggle_surveillance_button.config(text="Stop surveillance")
+            self.toggle_surveillance_button_antispam(self.__antispam_length)
         else:
             self.kill_surveillance_thread()
-            self.__toggle_surveillance_button.config(text="Start surveillance")
+            self.toggle_surveillance_button_antispam(self.__antispam_length)
 
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)
@@ -318,6 +321,16 @@ class SecurityCameraApp(tk.Tk):
                 self.__canvas.create_image(0, 0, image=self.__displayed_img, anchor=tk.NW)
 
         self.after(self.__gui_refresh_time, self.update_window)
+
+    def toggle_surveillance_button_antispam(self, iteration):
+        if iteration > 0:
+            new_text = "Stop surveillance" if self.cam_controller.surveillance_running else "Start surveillance"
+            self.__toggle_surveillance_button.config(text=f"{new_text} ({iteration})")
+            self.after(1000, self.toggle_surveillance_button_antispam, iteration - 1)
+        else:
+            current_text = self.__toggle_surveillance_button.cget("text")
+            self.__toggle_surveillance_button.config(text=current_text[:-3])
+            self.__toggle_surveillance_button.state(["!disabled"])
 
     @staticmethod
     def open_recordings_folder():

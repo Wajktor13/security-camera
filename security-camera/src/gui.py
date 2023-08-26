@@ -355,8 +355,7 @@ class SecurityCameraApp(tk.Tk):
 
             if frame is not None:
                 img = Image.fromarray(frame).resize(size=(self.__img_width, self.__img_height))
-                self.__displayed_img = ImageTk.PhotoImage(image=img)
-                self.__canvas.create_image(0, 0, image=self.__displayed_img, anchor=tk.NW)
+                self.set_preview_img(img)
 
         self.after(self.__gui_refresh_time, self.update_window)
 
@@ -369,6 +368,10 @@ class SecurityCameraApp(tk.Tk):
             current_text = self.__toggle_surveillance_button.cget("text")
             self.__toggle_surveillance_button.config(text=current_text[:-3])
             self.__toggle_surveillance_button.state(["!disabled"])
+
+    def set_preview_img(self, img):
+        self.__displayed_img = ImageTk.PhotoImage(image=img)
+        self.__canvas.create_image(0, 0, image=self.__displayed_img, anchor=tk.NW)
 
     @staticmethod
     def open_recordings_folder():

@@ -107,12 +107,27 @@ class SecurityCameraApp(tk.Tk):
         if self.__settings_window is not None:
             return
 
+        def on_settings_closing():
+            canvas.unbind_all("<MouseWheel>")
+            canvas.unbind_all("<Button-4>")
+            canvas.unbind_all("<Button-5>")
+            self.__settings_window.destroy()
+            self.__settings_window = None
+
         self.__settings_window = tk.Toplevel(self)
         self.__settings_window.title("Security Camera Settings")
         self.__settings_window.resizable(False, False)
         self.__settings_window.iconphoto(False, tk.PhotoImage(file="../assets/settings.png"))
+        self.__settings_window.protocol("WM_DELETE_WINDOW", on_settings_closing)
 
         # frame, canvas and scrollbar
+        def on_canvas_configure(_):
+            settings_frame.update_idletasks()
+            canvas.config(scrollregion=canvas.bbox("all"))
+
+        def scroll_canvas(value):
+            canvas.yview_scroll(value, "units")
+
         canvas = tk.Canvas(self.__settings_window, width=980, height=700)
         scrollbar = tk.Scrollbar(self.__settings_window, orient="vertical", command=canvas.yview)
         canvas.config(yscrollcommand=scrollbar.set)
@@ -122,14 +137,9 @@ class SecurityCameraApp(tk.Tk):
         settings_frame = ttk.Frame(canvas)
         canvas.create_window((0, 0), window=settings_frame, anchor="nw")
 
-        canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
-        canvas.bind_all("<Button-4>", lambda _: canvas.yview_scroll(-1, "units"))
-        canvas.bind_all("<Button-5>", lambda _: canvas.yview_scroll(1, "units"))
-
-        def on_canvas_configure(_):
-            settings_frame.update_idletasks()
-            canvas.config(scrollregion=canvas.bbox("all"))
-
+        canvas.bind_all("<MouseWheel>", lambda event: scroll_canvas(int(-1 * (event.delta / 120))))
+        canvas.bind_all("<Button-4>", scroll_canvas(-1))
+        canvas.bind_all("<Button-5>", scroll_canvas(1))
         canvas.bind("<Configure>", on_canvas_configure)
 
         # scale settings
@@ -300,9 +310,6 @@ class SecurityCameraApp(tk.Tk):
         apply_settings_button = ttk.Button(settings_frame, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
         apply_settings_button.grid(row=15, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
-
-        # disabling settings window
-        self.__settings_window = None
 
     def toggle_surveillance(self):
         self.__toggle_surveillance_button.state(["disabled"])

@@ -14,7 +14,7 @@ from camera import Camera
 class SecurityCameraApp(tk.Tk):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(className="Security Camera")
 
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
@@ -112,7 +112,10 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window = tk.Toplevel(self)
         self.__settings_window.title("Security Camera Settings")
         self.__settings_window.resizable(False, False)
-        canvas = tk.Canvas(self.__settings_window, width=960, height=700)
+        self.__settings_window.iconphoto(False, tk.PhotoImage(file="../assets/settings.png"))
+
+        # frame, canvas and scrollbar
+        canvas = tk.Canvas(self.__settings_window, width=980, height=700)
         scrollbar = tk.Scrollbar(self.__settings_window, orient="vertical", command=canvas.yview)
         canvas.config(yscrollcommand=scrollbar.set)
         canvas.pack(side="left", fill="both", expand=True)
@@ -132,7 +135,7 @@ class SecurityCameraApp(tk.Tk):
         canvas.bind("<Configure>", on_canvas_configure)
 
         # scale settings
-        settings_padding_x = 12
+        settings_padding_x = 15
         settings_padding_y = 30
         scale_length = 450
 

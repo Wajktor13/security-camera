@@ -112,8 +112,6 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window = tk.Toplevel(self)
         self.__settings_window.title("Security Camera Settings")
         self.__settings_window.resizable(False, False)
-
-        # canvas, scrollbar and settings frame
         canvas = tk.Canvas(self.__settings_window, width=960, height=700)
         scrollbar = tk.Scrollbar(self.__settings_window, orient="vertical", command=canvas.yview)
         canvas.config(yscrollcommand=scrollbar.set)
@@ -123,18 +121,19 @@ class SecurityCameraApp(tk.Tk):
         settings_frame = ttk.Frame(canvas)
         canvas.create_window((0, 0), window=settings_frame, anchor="nw")
 
-        settings_frame.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
         canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+        canvas.bind_all("<Button-4>", lambda _: canvas.yview_scroll(-1, "units"))
+        canvas.bind_all("<Button-5>", lambda _: canvas.yview_scroll(1, "units"))
 
         def on_canvas_configure(_):
+            settings_frame.update_idletasks()
             canvas.config(scrollregion=canvas.bbox("all"))
 
         canvas.bind("<Configure>", on_canvas_configure)
 
         # scale settings
         settings_padding_x = 12
-        settings_padding_y = 25
+        settings_padding_y = 30
         scale_length = 450
 
         recording_fps_scale_setting = (

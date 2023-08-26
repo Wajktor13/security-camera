@@ -58,7 +58,7 @@ class SecurityCameraApp(tk.Tk):
         self.__canvas.pack(fill=tk.BOTH, expand=True)
 
         # sidebar
-        self.__image_mode_var = None
+        self.__image_mode_dropdown = None
         self.__toggle_surveillance_button = None
         self.create_sidebar()
 
@@ -91,16 +91,14 @@ class SecurityCameraApp(tk.Tk):
         go_to_recordings_buttons.grid(row=4, columnspan=2, column=0, pady=button_padding, padx=button_padding)
 
         # dropdown
-        self.__image_mode_var = tk.StringVar()
-        self.__image_mode_var.set("Rectangles")
-        image_mode_label = ttk.Label(sidebar_frame, text="Camera mode:")
-        image_mode_label.grid(row=5, column=0, padx=5, pady=5)
-        image_mode_options = ["Standard", "Standard              ", "Rectangles", "Contours", "High contrast",
-                              "Mexican hat", "Gray", "Sharpened"]
-        image_mode_menu = ttk.OptionMenu(sidebar_frame, self.__image_mode_var, *image_mode_options,
-                                         style="Custom.TMenubutton")
-        image_mode_menu.config(width=15)
-        image_mode_menu.grid(row=5, column=1, padx=5, pady=5)
+        self.__image_mode_dropdown = DropdownSetting(root=sidebar_frame, initial_value="Rectangles",
+                                                     label_text="Camera mode:",
+                                                     dropdown_options=["Standard", "Standard              ",
+                                                                       "Rectangles",
+                                                                       "Contours", "High contrast", "Mexican hat",
+                                                                       "Gray",
+                                                                       "Sharpened"],
+                                                     width=15, row=5, column=0, padding_x=5, padding_y=5)
 
         # place frame
         sidebar_frame.grid(row=0, column=0, pady=(200, 10), padx=10, columnspan=2)
@@ -140,49 +138,49 @@ class SecurityCameraApp(tk.Tk):
         scale_length = 450
 
         recording_fps_scale_setting = (
-            ScaleSetting(settings_window=settings_frame, initial_value=self.cam_controller.fps, min_value=1,
+            ScaleSetting(root=settings_frame, initial_value=self.cam_controller.fps, min_value=1,
                          max_value=60, scale_length=scale_length, row=0, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Recording fps (FPS):"))
 
         emergency_recording_length_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.emergency_recording_length, min_value=1, max_value=30,
                          scale_length=scale_length, row=1, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Length of emergency recording (s):"))
 
         standard_recording_length_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.standard_recording_length, min_value=1, max_value=300,
                          scale_length=scale_length, row=2, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Length of standard recording (s):"))
 
         emergency_buff_length_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.emergency_buff_length, min_value=1, max_value=60,
                          scale_length=scale_length, row=3, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Length of emergency buffer (s):"))
 
         detection_sensitivity_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.detection_sensitivity, min_value=1,
                          max_value=self.cam_controller.max_detection_sensitivity, scale_length=scale_length, row=4,
                          column=0, padding_x=settings_padding_x, padding_y=settings_padding_y,
                          label_text="Detection sensitivity (unitless):"))
 
         min_motion_area_var_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
                          scale_length=scale_length, row=5, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Minimal motion area (pixels):"))
 
         delay_between_system_notifications_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.min_delay_between_system_notifications, min_value=5,
                          max_value=600, scale_length=scale_length, row=6, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Delay between system notifications (s):"))
 
         delay_between_email_notifications_scale_setting = (
-            ScaleSetting(settings_window=settings_frame,
+            ScaleSetting(root=settings_frame,
                          initial_value=self.cam_controller.min_delay_between_email_notifications,
                          min_value=5, max_value=600, scale_length=scale_length, row=7, column=0,
                          padding_x=settings_padding_x, padding_y=settings_padding_y,
@@ -190,25 +188,25 @@ class SecurityCameraApp(tk.Tk):
 
         # checkbutton settings
         system_notifications_checkbutton_setting = (
-            CheckbuttonSetting(settings_window=settings_frame,
+            CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_system_notifications,
                                label_text="Send system notifications:", row=11, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         email_notifications_checkbutton_setting = (
-            CheckbuttonSetting(settings_window=settings_frame,
+            CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_email_notifications,
                                label_text="Send email notifications:", row=12, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         local_recordings_checkbutton_setting = (
-            CheckbuttonSetting(settings_window=settings_frame,
+            CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.save_recordings_locally,
                                label_text="Save recordings locally:", row=13, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         upload_to_gdrive_checkbutton_setting = (
-            CheckbuttonSetting(settings_window=settings_frame,
+            CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.upload_to_gdrive,
                                label_text="Upload recordings to Google Drive:", row=14, column=0,
                                padding_x=settings_padding_x, padding_y=settings_padding_y))
@@ -217,12 +215,12 @@ class SecurityCameraApp(tk.Tk):
         entry_length = 38
 
         email_entry_setting = (
-            EntrySetting(settings_window=settings_frame, initial_value=self.cam_controller.email_recipient,
+            EntrySetting(root=settings_frame, initial_value=self.cam_controller.email_recipient,
                          label_text="Email notifications recipient:", row=9, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
         gdrive_folder_id_entry_setting = (
-            EntrySetting(settings_window=settings_frame, initial_value=self.cam_controller.gdrive_folder_id,
+            EntrySetting(root=settings_frame, initial_value=self.cam_controller.gdrive_folder_id,
                          label_text="Google Drive folder ID:", row=10, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
@@ -344,7 +342,7 @@ class SecurityCameraApp(tk.Tk):
                      "Standard": cam.get_standard_frame}
 
             try:
-                frame = modes[self.__image_mode_var.get()]()
+                frame = modes[self.__image_mode_dropdown.get_value()]()
             except KeyError:
                 frame = cam.get_standard_frame()
 
@@ -376,17 +374,17 @@ class SecurityCameraApp(tk.Tk):
 
 
 class ScaleSetting:
-    def __init__(self, settings_window, initial_value, min_value, max_value, scale_length, row, column, padding_x,
+    def __init__(self, root, initial_value, min_value, max_value, scale_length, row, column, padding_x,
                  padding_y, label_text):
         self.__var = tk.DoubleVar(value=initial_value)
 
-        self.__label = tk.ttk.Label(master=settings_window, text=label_text)
+        self.__label = tk.ttk.Label(master=root, text=label_text)
 
-        self.__scale = tk.ttk.Scale(master=settings_window, from_=min_value, to=max_value, variable=self.__var,
+        self.__scale = tk.ttk.Scale(master=root, from_=min_value, to=max_value, variable=self.__var,
                                     length=scale_length, orient=tk.HORIZONTAL,
                                     command=lambda value: self.value_label.configure(text=round(float(value), 0)))
 
-        self.value_label = tk.ttk.Label(master=settings_window, text=self.__var.get())
+        self.value_label = tk.ttk.Label(master=root, text=self.__var.get())
 
         self.arrange(row, column, padding_x, padding_y)
 
@@ -400,12 +398,12 @@ class ScaleSetting:
 
 
 class CheckbuttonSetting:
-    def __init__(self, settings_window, initial_value, label_text, row, column, padding_x, padding_y):
+    def __init__(self, root, initial_value, label_text, row, column, padding_x, padding_y):
         self.__var = tk.BooleanVar(value=initial_value)
 
-        self.__label = tk.ttk.Label(master=settings_window, text=label_text)
+        self.__label = tk.ttk.Label(master=root, text=label_text)
 
-        self.__menu = ttk.Checkbutton(master=settings_window, variable=self.__var)
+        self.__menu = ttk.Checkbutton(master=root, variable=self.__var)
 
         self.arrange(row, column, padding_x, padding_y)
 
@@ -418,18 +416,37 @@ class CheckbuttonSetting:
 
 
 class EntrySetting:
-    def __init__(self, settings_window, initial_value, label_text, row, column, width, padding_x, padding_y, font):
+    def __init__(self, root, initial_value, label_text, row, column, width, padding_x, padding_y, font):
         self.__var = tk.StringVar(value=initial_value)
 
-        self.__label = tk.ttk.Label(master=settings_window, text=label_text)
+        self.__label = tk.ttk.Label(master=root, text=label_text)
 
-        self.__entry = tk.Entry(master=settings_window, width=width, textvariable=self.__var, font=font)
+        self.__entry = tk.Entry(master=root, width=width, textvariable=self.__var, font=font)
 
         self.arrange(row, column, padding_x, padding_y)
 
     def arrange(self, row, column, padding_x, padding_y):
         self.__label.grid(row=row, column=column, padx=padding_x, pady=padding_y, sticky="W")
         self.__entry.grid(row=row, column=column + 1, padx=padding_x, pady=padding_y)
+
+    def get_value(self):
+        return self.__var.get()
+
+
+class DropdownSetting:
+    def __init__(self, root, initial_value, label_text, dropdown_options, width, row, column, padding_x, padding_y):
+        self.__var = tk.StringVar(value=initial_value)
+
+        self.__label = ttk.Label(master=root, text=label_text)
+
+        self.__menu = ttk.OptionMenu(root, self.__var, *dropdown_options, style="Custom.TMenubutton")
+
+        self.__menu.config(width=width)
+        self.arrange(row, column, padding_x, padding_y)
+
+    def arrange(self, row, column, padding_x, padding_y):
+        self.__label.grid(row=row, column=column, padx=padding_x, pady=padding_y, sticky="W")
+        self.__menu.grid(row=row, column=column + 1, padx=padding_x, pady=padding_y)
 
     def get_value(self):
         return self.__var.get()

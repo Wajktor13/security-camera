@@ -68,6 +68,9 @@ class SecurityCameraApp(tk.Tk):
         # cyclic window update
         self.update_window()
 
+        # set initial preview img
+        self.set_preview_img(Image.open("../assets/surveillance_disabled.png"))
+
     def create_sidebar(self):
         button_width = 30
         button_padding = 6
@@ -321,6 +324,9 @@ class SecurityCameraApp(tk.Tk):
             self.kill_surveillance_thread()
             self.toggle_surveillance_button_antispam(self.__antispam_length)
 
+            if self.__displayed_img is not None:
+                self.set_disabled_preview()
+
     def run_surveillance_thread(self):
         self.surveillance_thread = Thread(target=self.cam_controller.start_surveillance)
         self.__logger.info("surveillance thread started")
@@ -368,6 +374,13 @@ class SecurityCameraApp(tk.Tk):
             current_text = self.__toggle_surveillance_button.cget("text")
             self.__toggle_surveillance_button.config(text=current_text[:-3])
             self.__toggle_surveillance_button.state(["!disabled"])
+
+    def set_disabled_preview(self):
+        background = ImageTk.getimage(self.__displayed_img)
+        foreground = Image.open("../assets/surveillance_disabled.png")
+        foreground = foreground.resize(size=(320, 180))
+        background.paste(foreground, (1040, 0), foreground)
+        self.set_preview_img(background)
 
     def set_preview_img(self, img):
         self.__displayed_img = ImageTk.PhotoImage(image=img)

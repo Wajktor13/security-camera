@@ -37,6 +37,7 @@ class ControllerSettingsManager:
         controller.upload_to_gdrive = settings_data["upload_to_gdrive"]
         controller.save_recordings_locally = settings_data["save_recordings_locally"]
         controller.gdrive_folder_id = settings_data["gdrive_folder_id"]
+        controller.disable_preview = settings_data["disable_preview"]
 
     def save_settings(self, controller):
         settings_data = {
@@ -56,7 +57,8 @@ class ControllerSettingsManager:
             "email_recipient": controller.email_recipient,
             "upload_to_gdrive": controller.upload_to_gdrive,
             "save_recordings_locally": controller.save_recordings_locally,
-            "gdrive_folder_id": controller.gdrive_folder_id
+            "gdrive_folder_id": controller.gdrive_folder_id,
+            "disable_preview": controller.disable_preview
         }
 
         with open(self.settings_file_path, 'w') as settings_file:

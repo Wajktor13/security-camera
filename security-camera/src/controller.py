@@ -36,6 +36,7 @@ class Controller:
         self.upload_to_gdrive = None
         self.save_recordings_locally = None
         self.gdrive_folder_id = None
+        self.disable_preview = None
 
         # other
         self.no_emergency_recording_frames = None

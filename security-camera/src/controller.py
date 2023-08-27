@@ -110,7 +110,7 @@ class Controller:
 
             '''emergency recording'''
             # check if emergency recording should start
-            if not self.cam.emergency_recording_started:
+            if self.cam is not None and not self.cam.emergency_recording_started:
                 if self.cam.search_for_motion() and self.surveillance_running:
                     self.__logger.info("motion detected")
 

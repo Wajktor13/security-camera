@@ -291,9 +291,11 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.send_email_notifications = email_notifications_checkbutton_setting.get_value()
             self.cam_controller.save_recordings_locally = local_recordings_checkbutton_setting.get_value()
             self.cam_controller.upload_to_gdrive = upload_to_gdrive_checkbutton_setting.get_value()
+
+            prev_disable_preview_state = self.cam_controller.disable_preview
             self.cam_controller.disable_preview = disable_preview_checkbutton_setting.get_value()
 
-            if not self.cam_controller.disable_preview:
+            if prev_disable_preview_state and not self.cam_controller.disable_preview:
                 self.after(self.__gui_refresh_time, self.update_window)
 
             # email entry
@@ -351,7 +353,7 @@ class SecurityCameraApp(tk.Tk):
         if self.cam_controller.cam is not None:
             self.cam_controller.surveillance_running = False
             self.cam_controller.cam.destroy()
-        self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
+        # self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
         self.__logger.info("surveillance thread stopped")
 
     def restart_surveillance_thread(self):

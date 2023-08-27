@@ -1,1 +1,20 @@
-{"emergency_recording_length": 15.0, "standard_recording_length": 210.0, "emergency_buff_length": 20.0, "refresh_time": 10, "detection_sensitivity": 12.0, "max_detection_sensitivity": 15, "min_motion_rectangle_area": 102.0, "fps": 24.0, "camera_number": 0, "send_system_notifications": false, "min_delay_between_system_notifications": 213.0, "send_email_notifications": false, "min_delay_between_email_notifications": 300.0, "email_recipient": "wajktor007@gmail.com", "upload_to_gdrive": false, "save_recordings_locally": false, "gdrive_folder_id": "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y", "disable_preview": false}
+{
+    "emergency_recording_length": 15.0,
+    "standard_recording_length": 210.0,
+    "emergency_buff_length": 5.0,
+    "refresh_time": 10,
+    "detection_sensitivity": 12.0,
+    "max_detection_sensitivity": 15,
+    "min_motion_rectangle_area": 500.0,
+    "fps": 24.0,
+    "camera_number": 0,
+    "send_system_notifications": true,
+    "min_delay_between_system_notifications": 60.0,
+    "send_email_notifications": false,
+    "min_delay_between_email_notifications": 300.0,
+    "email_recipient": "wiktorwilkusz13@gmail.com",
+    "upload_to_gdrive": false,
+    "save_recordings_locally": true,
+    "gdrive_folder_id": "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y",
+    "disable_preview": false
+}

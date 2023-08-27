@@ -238,15 +238,14 @@ class SecurityCameraApp(tk.Tk):
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
         # camera number dropdown
-        camera_number_var = tk.IntVar()
-        camera_number_var.set(0)
-        camera_number_label = ttk.Label(settings_frame, text="Camera number:")
-        camera_number_label.grid(row=8, column=0, padx=settings_padding_x, pady=settings_padding_y, sticky="W")
-        camera_number_options = [self.cam_controller.camera_number] + [i for i in range(self.__no_cameras)]
-        camera_number_menu = ttk.OptionMenu(settings_frame, camera_number_var, *camera_number_options,
-                                            style="Custom.TMenubutton")
-        camera_number_menu.config(width=2)
-        camera_number_menu.grid(row=8, column=1, padx=5, pady=5)
+        camera_number_dropdown = (
+            DropdownSetting(root=settings_frame,
+                            initial_value=str(self.cam_controller.camera_number),
+                            label_text="Camera number:",
+                            dropdown_options=[str(self.cam_controller.camera_number)] + [str(i) for i in
+                                                                                         range(self.__no_cameras)],
+                            width=2, row=8, column=0, padding_x=5,
+                            padding_y=5))
 
         # settings applied label
         settings_applied_label = ttk.Label(settings_frame, text="", padding=(5, 5))
@@ -291,10 +290,10 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.gdrive_folder_id = gdrive_folder_id_entry_setting.get_value()
 
             # camera number dropdown
-            prev_camera_number = self.cam_controller.camera_number
-            self.cam_controller.camera_number = camera_number_var.get()
+            prev_camera_number = int(self.cam_controller.camera_number)
+            self.cam_controller.camera_number = int(camera_number_dropdown.get_value())
             self.__logger.info("changed camera")
-            if (prev_camera_number != camera_number_var.get() and
+            if (prev_camera_number != int(camera_number_dropdown.get_value()) and
                     self.cam_controller.surveillance_running):
                 # restarting surveillance in order to change camera
                 self.kill_surveillance_thread()

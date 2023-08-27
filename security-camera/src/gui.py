@@ -41,6 +41,10 @@ class SecurityCameraApp(tk.Tk):
         self.grid_columnconfigure(0, minsize=420)
         self.iconphoto(False, tk.PhotoImage(file="../assets/eye_icon.png"))
 
+        # images
+        self.surveillance_disabled_img = Image.open("../assets/surveillance_disabled.png")
+        self.preview_disabled_img = Image.open("../assets/preview_disabled.png")
+
         # theme
         self.__style = ttk.Style()
         self.__main_font = "TkDefaultFont 14"
@@ -65,11 +69,11 @@ class SecurityCameraApp(tk.Tk):
         # settings window
         self.__settings_window = None
 
+        # set initial preview img
+        self.set_preview_img(self.surveillance_disabled_img)
+
         # cyclic window update
         self.update_window()
-
-        # set initial preview img
-        self.set_preview_img(Image.open("../assets/surveillance_disabled.png"))
 
     def create_sidebar(self):
         button_width = 30
@@ -203,38 +207,44 @@ class SecurityCameraApp(tk.Tk):
         system_notifications_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_system_notifications,
-                               label_text="Send system notifications:", row=11, column=0, padding_x=settings_padding_x,
+                               label_text="Send system notifications:", row=12, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         email_notifications_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_email_notifications,
-                               label_text="Send email notifications:", row=12, column=0, padding_x=settings_padding_x,
+                               label_text="Send email notifications:", row=13, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         local_recordings_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.save_recordings_locally,
-                               label_text="Save recordings locally:", row=13, column=0, padding_x=settings_padding_x,
+                               label_text="Save recordings locally:", row=14, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         upload_to_gdrive_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to Google Drive:", row=14, column=0,
+                               label_text="Upload recordings to Google Drive:", row=15, column=0,
                                padding_x=settings_padding_x, padding_y=settings_padding_y))
+
+        disable_preview_checkbutton_setting = (
+            CheckbuttonSetting(root=settings_frame,
+                               initial_value=self.cam_controller.disable_preview,
+                               label_text="Disable preview:", row=9, column=0, padding_x=settings_padding_x,
+                               padding_y=settings_padding_y))
 
         # entry settings
         entry_length = 38
 
         email_entry_setting = (
             EntrySetting(root=settings_frame, initial_value=self.cam_controller.email_recipient,
-                         label_text="Email notifications recipient:", row=9, column=0, width=entry_length,
+                         label_text="Email notifications recipient:", row=10, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
         gdrive_folder_id_entry_setting = (
             EntrySetting(root=settings_frame, initial_value=self.cam_controller.gdrive_folder_id,
-                         label_text="Google Drive folder ID:", row=10, column=0, width=entry_length,
+                         label_text="Google Drive folder ID:", row=11, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
         # camera number dropdown
@@ -244,13 +254,12 @@ class SecurityCameraApp(tk.Tk):
                             label_text="Camera number:",
                             dropdown_options=[str(self.cam_controller.camera_number)] + [str(i) for i in
                                                                                          range(self.__no_cameras)],
-                            width=2, row=8, column=0, padding_x=5,
-                            padding_y=5))
+                            width=2, row=8, column=0, padding_x=settings_padding_x, padding_y=settings_padding_y))
 
         # settings applied label
         settings_applied_label = ttk.Label(settings_frame, text="", padding=(5, 5))
         settings_applied_label.configure(foreground="#217346")
-        settings_applied_label.grid(row=16, column=0, columnspan=3, padx=200)
+        settings_applied_label.grid(row=17, column=0, columnspan=3, padx=200)
 
         # apply settings button
         def update_email(new_email):
@@ -282,6 +291,10 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.send_email_notifications = email_notifications_checkbutton_setting.get_value()
             self.cam_controller.save_recordings_locally = local_recordings_checkbutton_setting.get_value()
             self.cam_controller.upload_to_gdrive = upload_to_gdrive_checkbutton_setting.get_value()
+            self.cam_controller.disable_preview = disable_preview_checkbutton_setting.get_value()
+
+            if not self.cam_controller.disable_preview:
+                self.after(self.__gui_refresh_time, self.update_window)
 
             # email entry
             update_email(email_entry_setting.get_value())
@@ -290,14 +303,11 @@ class SecurityCameraApp(tk.Tk):
             self.cam_controller.gdrive_folder_id = gdrive_folder_id_entry_setting.get_value()
 
             # camera number dropdown
-            prev_camera_number = int(self.cam_controller.camera_number)
+            camera_changed = int(self.cam_controller.camera_number) != int(camera_number_dropdown.get_value())
             self.cam_controller.camera_number = int(camera_number_dropdown.get_value())
             self.__logger.info("changed camera")
-            if (prev_camera_number != int(camera_number_dropdown.get_value()) and
-                    self.cam_controller.surveillance_running):
-                # restarting surveillance in order to change camera
-                self.kill_surveillance_thread()
-                self.run_surveillance_thread()
+            if camera_changed and self.cam_controller.surveillance_running:
+                self.restart_surveillance_thread()
                 self.__logger.info("restarted surveillance after camera change")
 
             # updating parameters
@@ -311,7 +321,7 @@ class SecurityCameraApp(tk.Tk):
 
         apply_settings_button = ttk.Button(settings_frame, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
-        apply_settings_button.grid(row=15, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
+        apply_settings_button.grid(row=16, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
 
     def toggle_surveillance(self):
         self.__toggle_surveillance_button.state(["disabled"])
@@ -319,11 +329,17 @@ class SecurityCameraApp(tk.Tk):
         if not self.cam_controller.surveillance_running:
             self.run_surveillance_thread()
             self.toggle_surveillance_button_antispam(self.__antispam_length)
+
+            if self.cam_controller.disable_preview:
+                self.set_preview_img(self.preview_disabled_img)
+
         else:
             self.kill_surveillance_thread()
             self.toggle_surveillance_button_antispam(self.__antispam_length)
 
-            if self.__displayed_img is not None:
+            if self.cam_controller.disable_preview:
+                self.set_preview_img(self.surveillance_disabled_img)
+            elif self.__displayed_img is not None:
                 self.set_disabled_preview()
 
     def run_surveillance_thread(self):
@@ -338,12 +354,19 @@ class SecurityCameraApp(tk.Tk):
         self.cam_controller.controller_settings_manager.save_settings(self.cam_controller)
         self.__logger.info("surveillance thread stopped")
 
+    def restart_surveillance_thread(self):
+        self.kill_surveillance_thread()
+        self.run_surveillance_thread()
+
     def on_closing(self):
         self.kill_surveillance_thread()
         self.destroy()
 
     def update_window(self):
-        if self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
+        if self.cam_controller.surveillance_running and self.cam_controller.disable_preview:
+            self.set_preview_img(self.preview_disabled_img)
+
+        elif self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
             cam = self.cam_controller.cam
             modes = {"Rectangles": cam.get_frame_with_rectangles,
                      "Contours": cam.get_frame_with_contours,
@@ -362,7 +385,10 @@ class SecurityCameraApp(tk.Tk):
                 img = Image.fromarray(frame).resize(size=(self.__img_width, self.__img_height))
                 self.set_preview_img(img)
 
-        self.after(self.__gui_refresh_time, self.update_window)
+            self.after(self.__gui_refresh_time, self.update_window)
+
+        else:
+            self.after(self.__gui_refresh_time, self.update_window)
 
     def toggle_surveillance_button_antispam(self, iteration):
         if iteration > 0:
@@ -376,7 +402,7 @@ class SecurityCameraApp(tk.Tk):
 
     def set_disabled_preview(self):
         background = ImageTk.getimage(self.__displayed_img)
-        foreground = Image.open("../assets/surveillance_disabled.png")
+        foreground = self.surveillance_disabled_img
         foreground = foreground.resize(size=(320, 180))
         background.paste(foreground, (1040, 0), foreground)
         self.set_preview_img(background)

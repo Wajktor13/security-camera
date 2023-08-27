@@ -138,8 +138,8 @@ class SecurityCameraApp(tk.Tk):
         canvas.create_window((0, 0), window=settings_frame, anchor="nw")
 
         canvas.bind_all("<MouseWheel>", lambda event: scroll_canvas(int(-1 * (event.delta / 120))))
-        canvas.bind_all("<Button-4>", scroll_canvas(-1))
-        canvas.bind_all("<Button-5>", scroll_canvas(1))
+        canvas.bind_all("<Button-4>", lambda _: scroll_canvas(-1))
+        canvas.bind_all("<Button-5>", lambda _: scroll_canvas(1))
         canvas.bind("<Configure>", on_canvas_configure)
 
         # scale settings

@@ -62,7 +62,7 @@ class SecurityCameraApp(tk.Tk):
         self.__canvas.pack(fill=tk.BOTH, expand=True)
 
         # sidebar
-        self.__image_mode_dropdown = None
+        self.__preview_mode_dropdown = None
         self.__toggle_surveillance_button = None
         self.create_sidebar()
 
@@ -98,14 +98,15 @@ class SecurityCameraApp(tk.Tk):
         go_to_recordings_buttons.grid(row=4, columnspan=2, column=0, pady=button_padding, padx=button_padding)
 
         # dropdown
-        self.__image_mode_dropdown = DropdownSetting(root=sidebar_frame, initial_value="Rectangles",
-                                                     label_text="Camera mode:",
-                                                     dropdown_options=["Standard", "Standard              ",
-                                                                       "Rectangles",
-                                                                       "Contours", "High contrast", "Mexican hat",
-                                                                       "Gray",
-                                                                       "Sharpened"],
-                                                     width=15, row=5, column=0, padding_x=5, padding_y=5)
+        self.__preview_mode_dropdown = DropdownSetting(root=sidebar_frame, initial_value="Rectangles",
+                                                       label_text="Preview mode:",
+                                                       dropdown_options=["Standard", "Standard              ",
+                                                                         "Rectangles",
+                                                                         "Contours", "High contrast", "Mexican hat",
+                                                                         "Gray",
+                                                                         "Sharpened"],
+                                                       width=15, row=5, column=0, padding_x=5, padding_y=5)
+        self.__preview_mode_dropdown.toggle_disable(self.cam_controller.disable_preview)
 
         # place frame
         sidebar_frame.grid(row=0, column=0, pady=(200, 10), padx=10, columnspan=2)
@@ -294,9 +295,9 @@ class SecurityCameraApp(tk.Tk):
 
             prev_disable_preview_state = self.cam_controller.disable_preview
             self.cam_controller.disable_preview = disable_preview_checkbutton_setting.get_value()
-
             if prev_disable_preview_state and not self.cam_controller.disable_preview:
                 self.after(self.__gui_refresh_time, self.update_window)
+            self.__preview_mode_dropdown.toggle_disable(self.cam_controller.disable_preview)
 
             # email entry
             update_email(email_entry_setting.get_value())
@@ -379,7 +380,7 @@ class SecurityCameraApp(tk.Tk):
                      "Standard": cam.get_standard_frame}
 
             try:
-                frame = modes[self.__image_mode_dropdown.get_value()]()
+                frame = modes[self.__preview_mode_dropdown.get_value()]()
             except KeyError:
                 frame = cam.get_standard_frame()
 
@@ -500,3 +501,9 @@ class DropdownSetting:
 
     def get_value(self):
         return self.__var.get()
+
+    def toggle_disable(self, disable):
+        if disable:
+            self.__menu["state"] = "disabled"
+        else:
+            self.__menu["state"] = "enabled"

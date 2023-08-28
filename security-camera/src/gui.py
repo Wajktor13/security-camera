@@ -124,7 +124,8 @@ class SecurityCameraApp(tk.Tk):
 
             if not settings_saved:
                 result = tk.messagebox.askyesno("Unsaved Settings",
-                                                "Settings have not been saved. Do you want to save them?")
+                                                "Settings have not been saved. Do you want to save them?",
+                                                parent=self.__settings_window)
                 if result:
                     apply_settings()
 

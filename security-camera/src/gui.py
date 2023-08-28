@@ -4,7 +4,7 @@ import re
 import subprocess
 import os
 import platform
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from controller import Controller
 from threading import Thread
 from PIL import Image, ImageTk
@@ -115,10 +115,20 @@ class SecurityCameraApp(tk.Tk):
         if self.__settings_window is not None:
             return
 
+        settings_saved = False
+
         def on_settings_closing():
             canvas.unbind_all("<MouseWheel>")
             canvas.unbind_all("<Button-4>")
             canvas.unbind_all("<Button-5>")
+
+            if not settings_saved:
+                result = tk.messagebox.askyesno("Unsaved Settings",
+                                                "Settings have not been saved. Do you want to save them?",
+                                                parent=self.__settings_window)
+                if result:
+                    apply_settings()
+
             self.__settings_window.destroy()
             self.__settings_window = None
 
@@ -321,6 +331,9 @@ class SecurityCameraApp(tk.Tk):
 
             # show settings applied label
             settings_applied_label.config(text="✔ settings have been applied")
+
+            nonlocal settings_saved
+            settings_saved = True
 
         apply_settings_button = ttk.Button(settings_frame, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)

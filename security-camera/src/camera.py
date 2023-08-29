@@ -59,8 +59,8 @@ class Camera:
         self.__frame_new = None
 
         # modes
-        self.frame_modes = {"Rectangles": self.get_frame_with_rectangles,
-                            "Contours": self.get_frame_with_contours,
+        self.frame_modes = {"Motion rectangles": self.get_frame_with_rectangles,
+                            "Motion contours": self.get_frame_with_contours,
                             "High contrast": self.get_high_contrast_frame,
                             "Mexican hat": self.get_mexican_hat_effect_frame,
                             "Sharpened": self.get_sharpened_frame,

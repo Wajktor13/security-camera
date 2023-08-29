@@ -346,8 +346,9 @@ class Camera:
         if self.validate_frame(frame):
             kernel = (3, 3)
             gray_frame = self.convert_frame_to_gray_gb(frame, kernel)
+            equ_frame = cv2.equalizeHist(gray_frame)
 
-            return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
+            return cv2.cvtColor(equ_frame, cv2.COLOR_GRAY2BGR)
         else:
             self.__logger.warning("get_high_contrast_frame() - failed to validate frame")
 

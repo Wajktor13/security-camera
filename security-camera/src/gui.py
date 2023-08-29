@@ -267,9 +267,9 @@ class SecurityCameraApp(tk.Tk):
                                                                                          range(self.__no_cameras)],
                             width=2, row=9, column=0, padding_x=settings_padding_x, padding_y=settings_padding_y))
 
-        recording_mode_dropdown = DropdownSetting(root=settings_frame, initial_value="Rectangles",
+        recording_mode_dropdown = DropdownSetting(root=settings_frame, initial_value=self.cam_controller.recording_mode,
                                                   label_text="Recording mode:",
-                                                  dropdown_options=["Standard", "Standard              ",
+                                                  dropdown_options=[self.cam_controller.recording_mode, "Standard",
                                                                     "Rectangles",
                                                                     "Contours", "High contrast", "Mexican hat",
                                                                     "Gray",
@@ -328,10 +328,16 @@ class SecurityCameraApp(tk.Tk):
             # camera number dropdown
             camera_changed = int(self.cam_controller.camera_number) != int(camera_number_dropdown.get_value())
             self.cam_controller.camera_number = int(camera_number_dropdown.get_value())
-            self.__logger.info("changed camera")
             if camera_changed and self.cam_controller.surveillance_running:
                 self.restart_surveillance_thread()
                 self.__logger.info("restarted surveillance after camera change")
+
+            # camera mode dropdown
+            recording_mode_changed = self.cam_controller.recording_mode != recording_mode_dropdown.get_value()
+            self.cam_controller.recording_mode = recording_mode_dropdown.get_value()
+            if recording_mode_changed and self.cam_controller.surveillance_running:
+                self.restart_surveillance_thread()
+                self.__logger.info("restarted surveillance after recording mode change")
 
             # updating parameters
             self.cam_controller.update_parameters()
@@ -393,22 +399,11 @@ class SecurityCameraApp(tk.Tk):
             self.set_preview_img(self.preview_disabled_img)
 
         elif self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
-            cam = self.cam_controller.cam
-            modes = {"Rectangles": cam.get_frame_with_rectangles,
-                     "Contours": cam.get_frame_with_contours,
-                     "High contrast": cam.get_high_contrast_frame,
-                     "Mexican hat": cam.get_mexican_hat_effect_frame,
-                     "Sharpened": cam.get_sharpened_frame,
-                     "Gray": cam.get_gray_frame,
-                     "Standard": cam.get_standard_frame}
+            frame = self.cam_controller.cam.get_frame_with_mode(self.__preview_mode_dropdown.get_value())
+            rgb_frame = self.cam_controller.cam.convert_frame_to_rgb(frame)
 
-            try:
-                frame = modes[self.__preview_mode_dropdown.get_value()]()
-            except KeyError:
-                frame = cam.get_standard_frame()
-
-            if frame is not None:
-                img = Image.fromarray(frame).resize(size=(self.__img_width, self.__img_height))
+            if rgb_frame is not None:
+                img = Image.fromarray(rgb_frame).resize(size=(self.__img_width, self.__img_height))
                 self.set_preview_img(img)
 
             self.after(self.__gui_refresh_time, self.update_window)

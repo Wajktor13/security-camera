@@ -91,7 +91,8 @@ class Controller:
                               max_detection_sensitivity=self.max_detection_sensitivity,
                               min_motion_contour_area=self.min_motion_rectangle_area,
                               fps=self.fps,
-                              camera_number=self.camera_number)
+                              camera_number=self.camera_number,
+                              recording_mode=self.recording_mode)
 
             time.sleep(0.005)
 

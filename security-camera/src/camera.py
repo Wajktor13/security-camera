@@ -14,7 +14,7 @@ class Camera:
     """
 
     def __init__(self, emergency_buff_size, detection_sensitivity, max_detection_sensitivity,
-                 min_motion_contour_area, fps, camera_number):
+                 min_motion_contour_area, fps, camera_number, recording_mode):
         # logging
         self.__logger = logging.getLogger("security_camera_logger")
 
@@ -24,6 +24,7 @@ class Camera:
         self.detection_sensitivity = detection_sensitivity
         self.max_detection_sensitivity = max_detection_sensitivity
         self.camera_number = camera_number
+        self.recording_mode = recording_mode
 
         # standard recording vars
         self.standard_recording_started = False
@@ -53,9 +54,18 @@ class Camera:
         self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_dimensions[0])
         self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_dimensions[1])
 
-        # other
+        # frames
         self.__frame_old = None
         self.__frame_new = None
+
+        # modes
+        self.frame_modes = {"Rectangles": self.get_frame_with_rectangles,
+                            "Contours": self.get_frame_with_contours,
+                            "High contrast": self.get_high_contrast_frame,
+                            "Mexican hat": self.get_mexican_hat_effect_frame,
+                            "Sharpened": self.get_sharpened_frame,
+                            "Gray": self.get_gray_frame,
+                            "Standard": self.get_standard_frame}
 
     def validate_capture(self):
         return self.__capture.isOpened()
@@ -95,7 +105,7 @@ class Camera:
         return success
 
     def update_emergency_buffer(self):
-        frame_to_save = np.copy(self.__frame_new)
+        frame_to_save = np.copy(self.get_frame_with_mode(self.recording_mode))
 
         if self.validate_frame(frame_to_save):
             self.__emergency_recording_buffered_frames.append(frame_to_save)
@@ -127,11 +137,12 @@ class Camera:
         gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(self.__frame_new, kernel),
                                 self.convert_frame_to_gray_gb(self.__frame_old, kernel))
 
-        binary_diff = cv2.threshold(gray_diff,
-                                    thresh=(self.max_detection_sensitivity + 1 - self.detection_sensitivity)
-                                    * self.max_detection_sensitivity,
-                                    maxval=255,
-                                    type=cv2.THRESH_BINARY)[1]
+        binary_diff = (
+            cv2.threshold(gray_diff,
+                          thresh=(self.max_detection_sensitivity + 1 - self.detection_sensitivity) *
+                          self.max_detection_sensitivity,
+                          maxval=255,
+                          type=cv2.THRESH_BINARY))[1]
 
         binary_diff = cv2.dilate(binary_diff, np.ones(kernel), 1)
 
@@ -177,7 +188,7 @@ class Camera:
 
             self.__logger.info("standard recording started")
 
-        frame_to_save = np.copy(self.__frame_new)
+        frame_to_save = np.copy(self.get_frame_with_mode(self.recording_mode))
 
         if self.validate_frame(frame_to_save) and self.__standard_recording_output is not None:
             try:
@@ -206,7 +217,7 @@ class Camera:
 
             self.__logger.info("emergency recording started")
 
-        frame_to_save = np.copy(self.__frame_new)
+        frame_to_save = np.copy(self.get_frame_with_mode(self.recording_mode))
         self.__emergency_recording_buffered_frames.append(frame_to_save)
 
     def write_emergency_buffer(self, controller):
@@ -277,89 +288,6 @@ class Camera:
     def validate_frame(frame):
         return frame is not None and str(frame) != "None"
 
-    '''Methods below are used to get and convert frames'''
-
-    def get_standard_frame(self):
-        frame = np.copy(self.__frame_new)
-        if self.validate_frame(frame):
-            return self.convert_frame_to_rgb(frame)
-        else:
-            self.__logger.warning("get_standard_frame() - failed to validate frame")
-
-    def get_sharpened_frame(self):
-        frame = np.copy(self.__frame_new)
-        if self.validate_frame(frame):
-            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-
-            rgb_frame = self.convert_frame_to_rgb(self.__frame_new)
-
-            return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
-        else:
-            self.__logger.warning("get_sharpened_frame() - failed to validate frame")
-
-    def get_gray_frame(self):
-        frame = np.copy(self.__frame_new)
-        if self.validate_frame(frame):
-            return cv2.cvtColor(self.__frame_new, cv2.COLOR_BGR2GRAY)
-        else:
-            self.__logger.warning("get_gray_frame() - failed to validate frame")
-
-    def get_mexican_hat_effect_frame(self):
-        frame = np.copy(self.__frame_new)
-        if self.validate_frame(frame):
-            kernel = np.array([[0, 0, -1, 0, 0], [0, -1, -2, -1, 0], [-1, -2, 16, -2, -1],
-                               [0, -1, -2, -1, 0], [0, 0, -1, 0, 0]])
-
-            rgb_frame = self.convert_frame_to_rgb(self.__frame_new)
-
-            return cv2.filter2D(src=rgb_frame, ddepth=-1, kernel=kernel)
-        else:
-            self.__logger.warning("get_mexican_hat_effect_frame() - failed to validate frame")
-
-    def get_high_contrast_frame(self):
-        frame = np.copy(self.__frame_new)
-        if self.validate_frame(frame):
-            kernel = (3, 3)
-            gray_frame = self.convert_frame_to_gray_gb(self.__frame_new, kernel)
-
-            return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
-        else:
-            self.__logger.warning("get_high_contrast_frame() - failed to validate frame")
-
-    def get_frame_with_contours(self):
-        contours = self.get_motion_contours_with_min_area()
-
-        if contours is not None:
-            return self.convert_frame_to_rgb(cv2.drawContours(self.__frame_old, contours, -1, (0, 255, 0), 3))
-        else:
-            return self.__frame_old
-
-    def get_frame_with_rectangles(self):
-        contours = self.get_motion_contours_with_min_area()
-
-        if contours is not None:
-            for contour in contours:
-                (x, y, w, h) = cv2.boundingRect(contour)
-                cv2.rectangle(self.__frame_old, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 255, 0), 2)
-
-        return self.convert_frame_to_rgb(self.__frame_old)
-
-    @staticmethod
-    def convert_frame_to_gray_gb(frame, kernel):
-        frame = np.copy(frame)
-        if Camera.validate_frame(frame):
-            return cv2.GaussianBlur(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), kernel, sigmaX=0)
-        else:
-            logging.warning("convert_frame_to_gray_gb() - failed to validate frame")
-
-    @staticmethod
-    def convert_frame_to_rgb(frame):
-        frame = np.copy(frame)
-        if Camera.validate_frame(frame):
-            return cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
-        # else:
-        #     logging.warning("convert_frame_to_rgb() - failed to validate frame")
-
     @classmethod
     def get_number_of_camera_devices(cls):
         no_cameras = 0
@@ -377,3 +305,95 @@ class Camera:
             index += 1
 
         return no_cameras
+
+    '''Methods below are used to get and convert frames'''
+
+    def get_standard_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            return frame
+        else:
+            self.__logger.warning("get_standard_frame() - failed to validate frame")
+
+    def get_sharpened_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+            return cv2.filter2D(src=frame, ddepth=-1, kernel=kernel)
+        else:
+            self.__logger.warning("get_sharpened_frame() - failed to validate frame")
+
+    def get_gray_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            return cv2.cvtColor(self.__frame_new, cv2.COLOR_BGR2GRAY)
+        else:
+            self.__logger.warning("get_gray_frame() - failed to validate frame")
+
+    def get_mexican_hat_effect_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            kernel = np.array([[0, 0, -1, 0, 0], [0, -1, -2, -1, 0], [-1, -2, 16, -2, -1],
+                               [0, -1, -2, -1, 0], [0, 0, -1, 0, 0]])
+
+            return cv2.filter2D(src=frame, ddepth=-1, kernel=kernel)
+        else:
+            self.__logger.warning("get_mexican_hat_effect_frame() - failed to validate frame")
+
+    def get_high_contrast_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            kernel = (3, 3)
+            gray_frame = self.convert_frame_to_gray_gb(frame, kernel)
+
+            return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
+        else:
+            self.__logger.warning("get_high_contrast_frame() - failed to validate frame")
+
+    def get_frame_with_contours(self):
+        contours = self.get_motion_contours_with_min_area()
+
+        if self.validate_frame(self.__frame_old):
+            frame = self.__frame_old.copy()
+            if contours is not None:
+                return cv2.drawContours(frame, contours, -1, (0, 255, 0), 3)
+            else:
+                return frame
+
+    def get_frame_with_rectangles(self):
+        contours = self.get_motion_contours_with_min_area()
+
+        if self.validate_frame(self.__frame_old):
+            frame = self.__frame_old.copy()
+
+            if contours is not None:
+                for contour in contours:
+                    (x, y, w, h) = cv2.boundingRect(contour)
+                    cv2.rectangle(frame, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 255, 0), 2)
+
+            return frame
+
+    def get_frame_with_mode(self, mode):
+        try:
+            frame = self.frame_modes[mode]()
+        except KeyError:
+            frame = self.get_standard_frame()
+
+        return frame
+
+    @staticmethod
+    def convert_frame_to_gray_gb(frame, kernel):
+        frame = np.copy(frame)
+        if Camera.validate_frame(frame):
+            return cv2.GaussianBlur(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), kernel, sigmaX=0)
+        else:
+            logging.warning("convert_frame_to_gray_gb() - failed to validate frame")
+
+    @staticmethod
+    def convert_frame_to_rgb(frame):
+        frame = np.copy(frame)
+        if Camera.validate_frame(frame):
+            return cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
+        # else:
+        #     logging.warning("convert_frame_to_rgb() - failed to validate frame")

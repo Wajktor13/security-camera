@@ -59,13 +59,15 @@ class Camera:
         self.__frame_new = None
 
         # modes
-        self.frame_modes = {"Rectangles": self.get_frame_with_rectangles,
-                            "Contours": self.get_frame_with_contours,
+        self.frame_modes = {"Motion rectangles": self.get_frame_with_rectangles,
+                            "Motion contours": self.get_frame_with_contours,
                             "High contrast": self.get_high_contrast_frame,
                             "Mexican hat": self.get_mexican_hat_effect_frame,
                             "Sharpened": self.get_sharpened_frame,
                             "Gray": self.get_gray_frame,
-                            "Standard": self.get_standard_frame}
+                            "Negative": self.get_negative_frame,
+                            "Standard": self.get_standard_frame,
+                            "Edges": self.get_edged_frame}
 
     def validate_capture(self):
         return self.__capture.isOpened()
@@ -327,7 +329,9 @@ class Camera:
     def get_gray_frame(self):
         frame = np.copy(self.__frame_new)
         if self.validate_frame(frame):
-            return cv2.cvtColor(self.__frame_new, cv2.COLOR_BGR2GRAY)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            pseudo_color_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)
+            return pseudo_color_frame
         else:
             self.__logger.warning("get_gray_frame() - failed to validate frame")
 
@@ -346,8 +350,9 @@ class Camera:
         if self.validate_frame(frame):
             kernel = (3, 3)
             gray_frame = self.convert_frame_to_gray_gb(frame, kernel)
+            equ_frame = cv2.equalizeHist(gray_frame)
 
-            return cv2.threshold(gray_frame, thresh=100, maxval=255, type=cv2.THRESH_BINARY)[1]
+            return cv2.cvtColor(equ_frame, cv2.COLOR_GRAY2BGR)
         else:
             self.__logger.warning("get_high_contrast_frame() - failed to validate frame")
 
@@ -373,6 +378,22 @@ class Camera:
                     cv2.rectangle(frame, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 255, 0), 2)
 
             return frame
+
+    def get_negative_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            return cv2.bitwise_not(frame)
+        else:
+            self.__logger.warning("get_negative_frame() - failed to validate frame")
+
+    def get_edged_frame(self):
+        frame = np.copy(self.__frame_new)
+        if self.validate_frame(frame):
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray_frame, threshold1=50, threshold2=150)
+            return cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        else:
+            self.__logger.warning("get_canny_frame() - failed to validate frame")
 
     def get_frame_with_mode(self, mode):
         try:

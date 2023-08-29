@@ -101,10 +101,13 @@ class SecurityCameraApp(tk.Tk):
         self.__preview_mode_dropdown = DropdownSetting(root=sidebar_frame, initial_value="Rectangles",
                                                        label_text="Preview mode:",
                                                        dropdown_options=["Standard", "Standard              ",
-                                                                         "Rectangles",
-                                                                         "Contours", "High contrast", "Mexican hat",
+                                                                         "Motion rectangles",
+                                                                         "Motion contours", "High contrast",
+                                                                         "Mexican hat",
                                                                          "Gray",
-                                                                         "Sharpened"],
+                                                                         "Sharpened",
+                                                                         "Negative",
+                                                                         "Edges"],
                                                        width=15, row=5, column=0, padding_x=5, padding_y=5)
         self.__preview_mode_dropdown.toggle_disable(self.cam_controller.disable_preview)
 
@@ -270,10 +273,12 @@ class SecurityCameraApp(tk.Tk):
         recording_mode_dropdown = DropdownSetting(root=settings_frame, initial_value=self.cam_controller.recording_mode,
                                                   label_text="Recording mode:",
                                                   dropdown_options=[self.cam_controller.recording_mode, "Standard",
-                                                                    "Rectangles",
-                                                                    "Contours", "High contrast", "Mexican hat",
+                                                                    "Motion rectangles",
+                                                                    "Motion contours", "High contrast", "Mexican hat",
                                                                     "Gray",
-                                                                    "Sharpened"],
+                                                                    "Sharpened",
+                                                                    "Negative",
+                                                                    "Edges"],
                                                   width=15, row=8, column=0, padding_x=settings_padding_x,
                                                   padding_y=settings_padding_y)
 

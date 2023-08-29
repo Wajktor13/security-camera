@@ -146,7 +146,7 @@ class SecurityCameraApp(tk.Tk):
         def scroll_canvas(value):
             canvas.yview_scroll(value, "units")
 
-        canvas = tk.Canvas(self.__settings_window, width=980, height=700)
+        canvas = tk.Canvas(self.__settings_window, width=1010, height=710)
         scrollbar = tk.Scrollbar(self.__settings_window, orient="vertical", command=canvas.yview)
         canvas.config(yscrollcommand=scrollbar.set)
         canvas.pack(side="left", fill="both", expand=True)
@@ -161,7 +161,7 @@ class SecurityCameraApp(tk.Tk):
         canvas.bind("<Configure>", on_canvas_configure)
 
         # scale settings
-        settings_padding_x = 15
+        settings_padding_x = 20
         settings_padding_y = 30
         scale_length = 450
 
@@ -218,31 +218,31 @@ class SecurityCameraApp(tk.Tk):
         system_notifications_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_system_notifications,
-                               label_text="Send system notifications:", row=12, column=0, padding_x=settings_padding_x,
+                               label_text="Send system notifications:", row=13, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         email_notifications_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.send_email_notifications,
-                               label_text="Send email notifications:", row=13, column=0, padding_x=settings_padding_x,
+                               label_text="Send email notifications:", row=14, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         local_recordings_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.save_recordings_locally,
-                               label_text="Save recordings locally:", row=14, column=0, padding_x=settings_padding_x,
+                               label_text="Save recordings locally:", row=15, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         upload_to_gdrive_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.upload_to_gdrive,
-                               label_text="Upload recordings to Google Drive:", row=15, column=0,
+                               label_text="Upload recordings to Google Drive:", row=16, column=0,
                                padding_x=settings_padding_x, padding_y=settings_padding_y))
 
         disable_preview_checkbutton_setting = (
             CheckbuttonSetting(root=settings_frame,
                                initial_value=self.cam_controller.disable_preview,
-                               label_text="Disable preview:", row=9, column=0, padding_x=settings_padding_x,
+                               label_text="Disable preview:", row=10, column=0, padding_x=settings_padding_x,
                                padding_y=settings_padding_y))
 
         # entry settings
@@ -250,27 +250,37 @@ class SecurityCameraApp(tk.Tk):
 
         email_entry_setting = (
             EntrySetting(root=settings_frame, initial_value=self.cam_controller.email_recipient,
-                         label_text="Email notifications recipient:", row=10, column=0, width=entry_length,
+                         label_text="Email notifications recipient:", row=11, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
         gdrive_folder_id_entry_setting = (
             EntrySetting(root=settings_frame, initial_value=self.cam_controller.gdrive_folder_id,
-                         label_text="Google Drive folder ID:", row=11, column=0, width=entry_length,
+                         label_text="Google Drive folder ID:", row=12, column=0, width=entry_length,
                          padding_x=settings_padding_x, padding_y=settings_padding_y, font=self.__main_font))
 
-        # camera number dropdown
+        # dropdown settings
         camera_number_dropdown = (
             DropdownSetting(root=settings_frame,
                             initial_value=str(self.cam_controller.camera_number),
                             label_text="Camera number:",
                             dropdown_options=[str(self.cam_controller.camera_number)] + [str(i) for i in
                                                                                          range(self.__no_cameras)],
-                            width=2, row=8, column=0, padding_x=settings_padding_x, padding_y=settings_padding_y))
+                            width=2, row=9, column=0, padding_x=settings_padding_x, padding_y=settings_padding_y))
+
+        recording_mode_dropdown = DropdownSetting(root=settings_frame, initial_value=self.cam_controller.recording_mode,
+                                                  label_text="Recording mode:",
+                                                  dropdown_options=[self.cam_controller.recording_mode, "Standard",
+                                                                    "Rectangles",
+                                                                    "Contours", "High contrast", "Mexican hat",
+                                                                    "Gray",
+                                                                    "Sharpened"],
+                                                  width=15, row=8, column=0, padding_x=settings_padding_x,
+                                                  padding_y=settings_padding_y)
 
         # settings applied label
         settings_applied_label = ttk.Label(settings_frame, text="", padding=(5, 5))
         settings_applied_label.configure(foreground="#217346")
-        settings_applied_label.grid(row=17, column=0, columnspan=3, padx=200)
+        settings_applied_label.grid(row=18, column=0, columnspan=3, padx=200)
 
         # apply settings button
         def update_email(new_email):
@@ -318,10 +328,16 @@ class SecurityCameraApp(tk.Tk):
             # camera number dropdown
             camera_changed = int(self.cam_controller.camera_number) != int(camera_number_dropdown.get_value())
             self.cam_controller.camera_number = int(camera_number_dropdown.get_value())
-            self.__logger.info("changed camera")
             if camera_changed and self.cam_controller.surveillance_running:
                 self.restart_surveillance_thread()
                 self.__logger.info("restarted surveillance after camera change")
+
+            # camera mode dropdown
+            recording_mode_changed = self.cam_controller.recording_mode != recording_mode_dropdown.get_value()
+            self.cam_controller.recording_mode = recording_mode_dropdown.get_value()
+            if recording_mode_changed and self.cam_controller.surveillance_running:
+                self.restart_surveillance_thread()
+                self.__logger.info("restarted surveillance after recording mode change")
 
             # updating parameters
             self.cam_controller.update_parameters()
@@ -337,7 +353,7 @@ class SecurityCameraApp(tk.Tk):
 
         apply_settings_button = ttk.Button(settings_frame, text="Apply", style='Accent.TButton',
                                            command=apply_settings, width=5)
-        apply_settings_button.grid(row=16, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
+        apply_settings_button.grid(row=17, column=0, columnspan=3, padx=390, pady=(30, 5), sticky="ew")
 
     def toggle_surveillance(self):
         self.__toggle_surveillance_button.state(["disabled"])
@@ -383,22 +399,11 @@ class SecurityCameraApp(tk.Tk):
             self.set_preview_img(self.preview_disabled_img)
 
         elif self.cam_controller.surveillance_running and self.cam_controller.cam is not None:
-            cam = self.cam_controller.cam
-            modes = {"Rectangles": cam.get_frame_with_rectangles,
-                     "Contours": cam.get_frame_with_contours,
-                     "High contrast": cam.get_high_contrast_frame,
-                     "Mexican hat": cam.get_mexican_hat_effect_frame,
-                     "Sharpened": cam.get_sharpened_frame,
-                     "Gray": cam.get_gray_frame,
-                     "Standard": cam.get_standard_frame}
+            frame = self.cam_controller.cam.get_frame_with_mode(self.__preview_mode_dropdown.get_value())
+            rgb_frame = self.cam_controller.cam.convert_frame_to_rgb(frame)
 
-            try:
-                frame = modes[self.__preview_mode_dropdown.get_value()]()
-            except KeyError:
-                frame = cam.get_standard_frame()
-
-            if frame is not None:
-                img = Image.fromarray(frame).resize(size=(self.__img_width, self.__img_height))
+            if rgb_frame is not None:
+                img = Image.fromarray(rgb_frame).resize(size=(self.__img_width, self.__img_height))
                 self.set_preview_img(img)
 
             self.after(self.__gui_refresh_time, self.update_window)

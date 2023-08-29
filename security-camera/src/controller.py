@@ -37,6 +37,7 @@ class Controller:
         self.save_recordings_locally = None
         self.gdrive_folder_id = None
         self.disable_preview = None
+        self.recording_mode = None
 
         # other
         self.no_emergency_recording_frames = None
@@ -90,7 +91,8 @@ class Controller:
                               max_detection_sensitivity=self.max_detection_sensitivity,
                               min_motion_contour_area=self.min_motion_rectangle_area,
                               fps=self.fps,
-                              camera_number=self.camera_number)
+                              camera_number=self.camera_number,
+                              recording_mode=self.recording_mode)
 
             time.sleep(0.005)
 

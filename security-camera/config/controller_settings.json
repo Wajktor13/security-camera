@@ -16,5 +16,6 @@
     "upload_to_gdrive": false,
     "save_recordings_locally": true,
     "gdrive_folder_id": "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y",
-    "disable_preview": false
+    "disable_preview": false,
+    "recording_mode": "Standard"
 }

@@ -327,7 +327,9 @@ class Camera:
     def get_gray_frame(self):
         frame = np.copy(self.__frame_new)
         if self.validate_frame(frame):
-            return cv2.cvtColor(self.__frame_new, cv2.COLOR_BGR2GRAY)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            pseudo_color_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)
+            return pseudo_color_frame
         else:
             self.__logger.warning("get_gray_frame() - failed to validate frame")
 

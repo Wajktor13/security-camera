@@ -48,6 +48,7 @@ class Controller:
         self.notification_sender = NotificationSender()
         self.__stats_data_manager = None
         self.controller_settings_manager = ControllerSettingsManager("../config/controller_settings.json")
+        self.collect_stats = False
 
         # loading settings from json
         self.controller_settings_manager.load_settings(self)
@@ -78,8 +79,9 @@ class Controller:
         last_system_notification_time = None
         last_email_notification_time = None
 
-        self.__stats_data_manager = StatsDataManager("../data/stats.sqlite")
-        self.__stats_data_manager.insert_surveillance_log("ON")
+        if self.collect_stats:
+            self.__stats_data_manager = StatsDataManager("../data/stats.sqlite")
+            self.__stats_data_manager.insert_surveillance_log("ON")
 
         while self.cam is None or not self.cam.validate_capture():
             # opening input stream failed - try again
@@ -120,7 +122,8 @@ class Controller:
                     if self.save_recordings_locally:
                         self.cam.save_emergency_recording_frame(controller=self)
 
-                    self.__stats_data_manager.insert_motion_detection_data()
+                    if self.collect_stats:
+                        self.__stats_data_manager.insert_motion_detection_data()
 
                     if self.send_system_notifications and (last_system_notification_time is None or
                                                            time.time() - last_system_notification_time >
@@ -136,7 +139,8 @@ class Controller:
                         system_notification_thread.start()
                         self.__logger.info("system notification thread started")
 
-                        self.__stats_data_manager.insert_notifications_log("system")
+                        if self.collect_stats:
+                            self.__stats_data_manager.insert_notifications_log("system")
 
                     if self.send_email_notifications and (last_email_notification_time is None or
                                                           time.time() - last_email_notification_time >
@@ -151,7 +155,8 @@ class Controller:
                         email_notification_thread.start()
                         self.__logger.info("email notification thread started")
 
-                        self.__stats_data_manager.insert_notifications_log("email")
+                        if self.collect_stats:
+                            self.__stats_data_manager.insert_notifications_log("email")
 
             # check if emergency recording should end
             elif self.save_recordings_locally and \
@@ -178,7 +183,7 @@ class Controller:
 
         self.cam = None
 
-        if self.__stats_data_manager is not None:
+        if self.collect_stats and self.__stats_data_manager is not None:
             self.__stats_data_manager.insert_surveillance_log("OFF")
             self.__stats_data_manager.close_connection()
 

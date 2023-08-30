@@ -200,7 +200,7 @@ class SecurityCameraApp(tk.Tk):
 
         min_motion_area_var_scale_setting = (
             ScaleSetting(root=settings_frame,
-                         initial_value=self.cam_controller.min_motion_rectangle_area, min_value=10, max_value=5000,
+                         initial_value=self.cam_controller.min_motion_rectangle_area, min_value=100, max_value=9999,
                          scale_length=scale_length, row=5, column=0, padding_x=settings_padding_x,
                          padding_y=settings_padding_y, label_text="Minimal motion area (pixels):"))
 

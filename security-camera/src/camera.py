@@ -6,6 +6,7 @@ from threading import Thread
 from collections import deque
 from platform import system
 from time import sleep
+from datetime import datetime
 
 
 class Camera:
@@ -94,6 +95,8 @@ class Camera:
         self.__frame_old = self.__frame_new
         try:
             success, self.__frame_new = self.__capture.read()
+            cv2.putText(self.__frame_new, str(datetime.now())[:-7], (15, 35),
+                        cv2.FONT_HERSHEY_PLAIN, 2.2, (255, 255, 255), 2, cv2.LINE_AA)
         except cv2.error:
             self.__logger.exception("failed to refresh frame")
             return False
@@ -393,7 +396,7 @@ class Camera:
             edges = cv2.Canny(gray_frame, threshold1=50, threshold2=150)
             return cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
         else:
-            self.__logger.warning("get_canny_frame() - failed to validate frame")
+            self.__logger.warning("get_edged_frame() - failed to validate frame")
 
     def get_frame_with_mode(self, mode):
         try:

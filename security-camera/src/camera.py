@@ -139,8 +139,16 @@ class Camera:
 
         kernel = (3, 3)
 
-        gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(self.__frame_new, kernel),
-                                self.convert_frame_to_gray_gb(self.__frame_old, kernel))
+        # hide timestamps
+        frame_old = self.__frame_old.copy()
+        cv2.rectangle(frame_old, (0, 0), (420, 50), (0, 0, 0), -1)
+        frame_new = self.__frame_new.copy()
+        cv2.rectangle(frame_new, (0, 0), (420, 50), (0, 0, 0), -1)
+
+        # get difference between frames
+
+        gray_diff = cv2.absdiff(self.convert_frame_to_gray_gb(frame_new, kernel),
+                                self.convert_frame_to_gray_gb(frame_old, kernel))
 
         binary_diff = (
             cv2.threshold(gray_diff,

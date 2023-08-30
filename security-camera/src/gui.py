@@ -140,7 +140,7 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window.resizable(False, False)
         self.__settings_window.iconphoto(False, tk.PhotoImage(file="../assets/settings.png"))
         self.__settings_window.protocol("WM_DELETE_WINDOW", on_settings_closing)
-        self.__settings_window.geometry(f"1000x720+{self.winfo_x() + 50}+{self.winfo_y() + 50}")
+        self.__settings_window.geometry(f"1030x720+{self.winfo_x() + 50}+{self.winfo_y() + 50}")
 
         # frame, canvas and scrollbar
         def on_canvas_configure(_):

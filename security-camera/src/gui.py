@@ -34,7 +34,7 @@ class SecurityCameraApp(tk.Tk):
         self.__displayed_img = None
         self.__antispam_length = 5
         self.resizable(False, False)
-        self.geometry("{}x{}+-7+0".format(self.__app_width, self.__app_height))
+        self.geometry(f"{self.__app_width}x{self.__app_height}+100+100")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.title('Security Camera')
         self.option_add("*tearOff", False)
@@ -140,6 +140,7 @@ class SecurityCameraApp(tk.Tk):
         self.__settings_window.resizable(False, False)
         self.__settings_window.iconphoto(False, tk.PhotoImage(file="../assets/settings.png"))
         self.__settings_window.protocol("WM_DELETE_WINDOW", on_settings_closing)
+        self.__settings_window.geometry(f"1000x720+{self.winfo_x() + 50}+{self.winfo_y() + 50}")
 
         # frame, canvas and scrollbar
         def on_canvas_configure(_):

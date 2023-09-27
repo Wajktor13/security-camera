@@ -7,3 +7,5 @@ security-camera/tmp/tmp.jpg
 security-camera/logs/*.log
 /security-camera/data/stats.sqlite
 security-camera/tests/__pycache__
+venv
+.vscode

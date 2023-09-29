@@ -49,8 +49,13 @@ class Camera:
             self.__fourcc_codec = cv2.VideoWriter_fourcc(*"mp4v")
             self.__capture = cv2.VideoCapture(self.camera_number)
             self.__logger.info("using mp4v video codec on Linux")
-
-        self.frame_dimensions = (1920, 1080)
+            
+        HIGH_RES = 10000
+        self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, HIGH_RES)
+        self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, HIGH_RES)
+        
+        self.frame_dimensions = (int(self.__capture.get(cv2.CAP_PROP_FRAME_WIDTH)), 
+                                 int(self.__capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
         self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_dimensions[0])
         self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_dimensions[1])

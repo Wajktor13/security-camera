@@ -32,6 +32,7 @@
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
+        <li><a href="#API">api</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
@@ -63,7 +64,7 @@ Some of the currently available features:
 * debug log
 * adjustable parameters (check <a href="#usage">usage</a>)
 
-The project came to life as a final assignment for Python Course at AGH University (and it received 5 out of 5 possible points).
+The project came to life as a final assignment for a Python Course at the AGH University. It was created in collaboration with [@Xavvee](https://github.com/Xavvee).
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -74,8 +75,8 @@ The project came to life as a final assignment for Python Course at AGH Universi
 
 [![Python](https://img.shields.io/static/v1?style=for-the-badge&message=Python&color=3776AB&logo=Python&logoColor=FFFFFF&label=)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/static/v1?style=for-the-badge&message=OpenCV&color=5C3EE8&logo=OpenCV&logoColor=FFFFFF&label=)](https://opencv.org/)
-[![Google Drive](https://img.shields.io/static/v1?style=for-the-badge&message=Google+Drive&color=4285F4&logo=Google+Drive&logoColor=FFFFFF&label=)](https://drive.google.com)
-[![Gmail](https://img.shields.io/static/v1?style=for-the-badge&message=Gmail&color=EA4335&logo=Gmail&logoColor=FFFFFF&label=)](https://mail.google.com)
+[![Google Drive](https://img.shields.io/static/v1?style=for-the-badge&message=Google+Drive+API&color=4285F4&logo=Google+Drive&logoColor=FFFFFF&label=)](https://drive.google.com)
+[![Gmail](https://img.shields.io/static/v1?style=for-the-badge&message=Gmail+API&color=EA4335&logo=Gmail&logoColor=FFFFFF&label=)](https://mail.google.com)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -84,10 +85,31 @@ The project came to life as a final assignment for Python Course at AGH Universi
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-  TODO
 ### Prerequisites
+
+* Python 3 (preferably >= 3.10)
+* git
+
 ### Installation
+
+1. Clone the repo
+   ```sh
+      git clone https://github.com/Wajktor13/security-camera
+   ```
+2. Enter **_security-camera_** directory and install python libraries with pip
+   ```sh
+      pip install -r requirements.txt
+   ```
+3. Enter **_security-camera/src_** directory and run **_run.py_** with Python
+   ```sh
+      python run.py
+   ```
+### API
+
+If you want to use email notifications and uploading to Google Drive, you need your own API keys.
+<br/>
+<br/>
+_tutorial coming soon_
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -108,8 +130,9 @@ The project came to life as a final assignment for Python Course at AGH Universi
 <!-- ROADMAP -->
 ## Roadmap
 
+TODO:
 - [ ] stats
-- [ ] low resource consumption mode
+- [ ] low resources consumption mode
 - [ ] recording schedule
 
 See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
@@ -150,7 +173,7 @@ Distributed under the Apache License 2.0. See [LICENSE](https://github.com/Wajkt
 
 Wiktor Wilkusz - wiktorwilkusz13@gmail.com
 
-Project Link: https://github.com/Wajktor13/security-camera
+Project link: https://github.com/Wajktor13/security-camera
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

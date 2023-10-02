@@ -92,7 +92,7 @@ The project came to life as a final assignment for a Python Course at the AGH Un
 
 ### Installation
 
-1. Clone the repo
+1. Clone the repo (or download the latest release)
    ```sh
       git clone https://github.com/Wajktor13/security-camera
    ```

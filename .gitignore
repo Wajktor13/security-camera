@@ -8,4 +8,5 @@ security-camera/logs/*.log
 /security-camera/data/stats.sqlite
 security-camera/tests/__pycache__
 venv
+.venv
 .vscode

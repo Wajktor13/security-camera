@@ -12,10 +12,10 @@
     "min_delay_between_system_notifications": 60.0,
     "send_email_notifications": false,
     "min_delay_between_email_notifications": 300.0,
-    "email_recipient": "wiktorwilkusz13@gmail.com",
+    "email_recipient": "",
     "upload_to_gdrive": false,
     "save_recordings_locally": true,
-    "gdrive_folder_id": "1vS3JDBY38vPrzEfTwWBCuHtSn6sI7J7Y",
+    "gdrive_folder_id": "",
     "disable_preview": false,
     "recording_mode": "Standard"
 }

@@ -1,10 +1,13 @@
-{"installed":
-    {
-        "client_id":"587217730905-l0u30n3qq4bqug8c38h388vg64tlmqko.apps.googleusercontent.com",
-        "project_id":"security-camera-386221",
-        "auth_uri":"https://accounts.google.com/o/oauth2/auth",
-        "token_uri":"https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret":"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",
-        "redirect_uris":["http://localhost"]}}
+{
+    "installed":
+        {
+            "client_id":"",
+            "project_id":"",
+            "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+            "token_uri":"https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret":"",
+            "redirect_uris":["http://localhost"]
+        }
+}
                
